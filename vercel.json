@@ -1,0 +1,11 @@
+{
+  "functions": {
+    "api/copy.js": {
+      "runtime": "nodejs18.x"
+    }
+  },
+  "routes": [
+    { "src": "/api/copy", "dest": "/api/copy.js" },
+    { "src": "/(.*)", "dest": "/public/$1" }
+  ]
+}
