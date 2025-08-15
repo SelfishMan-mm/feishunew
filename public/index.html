@@ -778,7 +778,7 @@
         // 如果有查询条件，使用后端筛选逻辑
         let filteredData = sourceTableData;
         if (queryFieldId && queryValue && ['equals', 'contains', 'startsWith', 'endsWith'].includes(queryOperator)) {
-          console.log('前端筛选参数:', {
+          console.log('🔍 调用后端筛选:', {
             queryFieldId,
             queryOperator,
             queryValue,
@@ -803,19 +803,33 @@
 
           const filterResult = await filterResponse.json();
           if (filterResult.success) {
-            // 重新获取筛选后的数据
-            filteredData = sourceTableData.filter(record => {
-              const fieldValue = record.fields[queryFieldId];
-              return applyFilterLogic(fieldValue, queryOperator, queryValue);
-            });
-            log(`🔍 筛选结果：${filteredData.length} / ${sourceTableData.length} 条记录`);
+            // ✅ 直接使用后端返回的筛选结果
+            filteredData = filterResult.records || sourceTableData;
+            log(`🔍 筛选结果：${filterResult.matchedCount} / ${sourceTableData.length} 条记录`);
           }
         } else if (queryFieldId && ['notEmpty', 'isEmpty'].includes(queryOperator)) {
-          filteredData = sourceTableData.filter(record => {
-            const fieldValue = record.fields[queryFieldId];
-            return applyFilterLogic(fieldValue, queryOperator, '');
+          // 对于 notEmpty/isEmpty，也调用后端筛选
+          const filterResponse = await fetch('/api/data-operations', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              operation: 'preview-filter',
+              sourceTableId: sourceTableId,
+              baseId: currentBaseId,
+              personalToken: currentToken,
+              filters: [{
+                field: queryFieldId,
+                operator: queryOperator,
+                value: ''
+              }]
+            })
           });
-          log(`🔍 筛选结果：${filteredData.length} / ${sourceTableData.length} 条记录`);
+
+          const filterResult = await filterResponse.json();
+          if (filterResult.success) {
+            filteredData = filterResult.records || sourceTableData;
+            log(`🔍 筛选结果：${filterResult.matchedCount} / ${sourceTableData.length} 条记录`);
+          }
         }
 
         const queryFieldName = queryFieldId ?

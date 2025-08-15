@@ -23,10 +23,10 @@ module.exports = async function handler(req, res) {
     
     let fieldMap = {};
 
-    // 使用自定义字段映射或自动映射
+    // ✅ 优先使用自定义字段映射
     if (customFieldMapping && Object.keys(customFieldMapping).length > 0) {
       fieldMap = customFieldMapping;
-      console.log('使用自定义字段映射:', fieldMap);
+      console.log('✅ 整表复制使用自定义字段映射:', Object.keys(fieldMap).length, '个字段');
     } else {
       // 1. 字段 & 记录（分页）
       const [sf, tf] = await Promise.all([
@@ -51,7 +51,7 @@ module.exports = async function handler(req, res) {
 
       const map = new Map(tFields.map(f => [f.field_name, f.field_id]));
       sFields.forEach(f => { const id = map.get(f.field_name); if (id) fieldMap[f.field_id] = id; });
-      console.log('使用自动字段映射:', fieldMap);
+      console.log('✅ 整表复制使用自动字段映射:', Object.keys(fieldMap).length, '个字段');
     }
 
     let pageToken;

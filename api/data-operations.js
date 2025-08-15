@@ -82,12 +82,12 @@ async function copyRecords(req, res) {
   try {
     let fieldMapping = {};
 
-    // 使用自定义字段映射或自动映射
+    // ✅ 优先使用自定义字段映射
     if (customFieldMapping && Object.keys(customFieldMapping).length > 0) {
       fieldMapping = customFieldMapping;
-      console.log('使用自定义字段映射:', fieldMapping);
+      console.log('✅ 使用自定义字段映射:', Object.keys(fieldMapping).length, '个字段');
     } else {
-      // 获取字段映射
+      // 获取字段信息进行自动映射
       const [sourceFields, targetFields] = await Promise.all([
         client.base.appTableField.list({ path: { table_id: sourceTableId } }),
         client.base.appTableField.list({ path: { table_id: targetTableId } })
@@ -101,7 +101,7 @@ async function copyRecords(req, res) {
           fieldMapping[sourceField.field_id] = targetFieldId;
         }
       });
-      console.log('使用自动字段映射:', fieldMapping);
+      console.log('✅ 使用自动字段映射:', Object.keys(fieldMapping).length, '个字段');
     }
 
     // 复制记录
@@ -175,6 +175,7 @@ async function previewFilter(req, res) {
       success: true,
       totalCount: records.length,
       matchedCount: matchedRecords.length,
+      records: matchedRecords, // ✅ 返回筛选后的记录
       filters: filters
     });
 
@@ -189,7 +190,7 @@ async function previewFilter(req, res) {
 
 // 筛选复制
 async function filterCopy(req, res) {
-  const { sourceTableId, targetTableId, baseId, personalToken, filters } = req.body;
+  const { sourceTableId, targetTableId, baseId, personalToken, filters, customFieldMapping } = req.body;
   
   if (!sourceTableId || !targetTableId || !baseId || !personalToken || !filters) {
     return res.status(400).json({ error: '缺少必要参数' });
@@ -201,21 +202,29 @@ async function filterCopy(req, res) {
   });
 
   try {
-    // 获取字段映射
-    const [sourceFields, targetFields] = await Promise.all([
-      client.base.appTableField.list({ path: { table_id: sourceTableId } }),
-      client.base.appTableField.list({ path: { table_id: targetTableId } })
-    ]);
+    let fieldMapping = {};
 
-    const targetFieldMap = new Map(targetFields.data.items.map(f => [f.field_name, f.field_id]));
-    const fieldMapping = {};
-    
-    sourceFields.data.items.forEach(sourceField => {
-      const targetFieldId = targetFieldMap.get(sourceField.field_name);
-      if (targetFieldId) {
-        fieldMapping[sourceField.field_id] = targetFieldId;
-      }
-    });
+    // ✅ 优先使用自定义字段映射
+    if (customFieldMapping && Object.keys(customFieldMapping).length > 0) {
+      fieldMapping = customFieldMapping;
+      console.log('✅ 筛选复制使用自定义字段映射:', Object.keys(fieldMapping).length, '个字段');
+    } else {
+      // 获取字段映射
+      const [sourceFields, targetFields] = await Promise.all([
+        client.base.appTableField.list({ path: { table_id: sourceTableId } }),
+        client.base.appTableField.list({ path: { table_id: targetTableId } })
+      ]);
+
+      const targetFieldMap = new Map(targetFields.data.items.map(f => [f.field_name, f.field_id]));
+      
+      sourceFields.data.items.forEach(sourceField => {
+        const targetFieldId = targetFieldMap.get(sourceField.field_name);
+        if (targetFieldId) {
+          fieldMapping[sourceField.field_id] = targetFieldId;
+        }
+      });
+      console.log('✅ 筛选复制使用自动字段映射:', Object.keys(fieldMapping).length, '个字段');
+    }
 
     // 获取并筛选记录
     const allRecords = await getAllRecords(client, sourceTableId);
