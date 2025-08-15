@@ -1,11 +1,1 @@
-{
-  "functions": {
-    "copyRecords/api/copy.js": {
-      "runtime": "@vercel/node@18"
-    }
-  },
-  "routes": [
-    { "src": "/api/copy", "dest": "/copyRecords/api/copy.js" },
-    { "src": "/(.*)", "dest": "/copyRecords/public/$1" }
-  ]
-}
+{}
