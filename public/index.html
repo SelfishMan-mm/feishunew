@@ -327,80 +327,7 @@
       overflow-y: auto;
     }
 
-    /* 操作历史样式 */
-    .history-controls {
-      margin-bottom: 15px;
-      display: flex;
-      gap: 10px;
-    }
 
-    .history-controls button {
-      flex: 0 0 auto;
-      padding: 8px 16px;
-      font-size: 13px;
-    }
-
-    .history-item {
-      background: #f8f9fa;
-      border: 1px solid #dee2e6;
-      border-radius: 6px;
-      padding: 15px;
-      margin-bottom: 10px;
-    }
-
-    .history-header {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      margin-bottom: 8px;
-    }
-
-    .history-title {
-      font-weight: bold;
-      color: #333;
-    }
-
-    .history-time {
-      font-size: 12px;
-      color: #666;
-    }
-
-    .history-details {
-      font-size: 13px;
-      color: #555;
-      line-height: 1.4;
-    }
-
-    .history-status {
-      display: inline-block;
-      padding: 2px 8px;
-      border-radius: 12px;
-      font-size: 11px;
-      font-weight: bold;
-      margin-left: 8px;
-    }
-
-    .status-success {
-      background: #d4edda;
-      color: #155724;
-    }
-
-    .status-error {
-      background: #f8d7da;
-      color: #721c24;
-    }
-
-    .status-partial {
-      background: #fff3cd;
-      color: #856404;
-    }
-
-    .history-empty {
-      text-align: center;
-      color: #666;
-      padding: 30px;
-      font-style: italic;
-    }
   </style>
 </head>
 
@@ -553,17 +480,7 @@
         </div>
       </div>
 
-      <!-- 操作历史 -->
-      <div class="section" id="historySection">
-        <h3>📚 操作历史</h3>
-        <div class="history-controls">
-          <button onclick="loadHistory()" type="button">🔄 刷新历史</button>
-          <button onclick="clearHistory()" type="button" style="background: #ff7875;">🗑️ 清空历史</button>
-        </div>
-        <div id="historyList">
-          <div class="history-empty">暂无操作历史</div>
-        </div>
-      </div>
+
 
       <!-- 日志 -->
       <div class="section">
@@ -1207,13 +1124,7 @@
         log(`❌ 操作失败: ${error.message}`);
         updateProgress(0, '操作失败', error.message);
         
-        // 记录到历史
-        addToHistory({
-          type: operationType,
-          status: 'error',
-          error: error.message,
-          params: params
-        });
+
       } finally {
         currentOperation = null;
         setTimeout(() => {
@@ -1246,20 +1157,8 @@
       const data = await response.json();
       if (data.success) {
         log(`✅ 操作完成！处理了 ${data.processed || 0} 条记录`);
-        addToHistory({
-          type: currentOperation,
-          status: 'success',
-          processed: data.processed || 0,
-          params: {}
-        });
       } else {
         log(`❌ 操作失败: ${data.error}`);
-        addToHistory({
-          type: currentOperation,
-          status: 'error',
-          error: data.error,
-          params: {}
-        });
       }
     }
 
@@ -1278,127 +1177,11 @@
       if (currentOperation) {
         operationCancelled = true;
         log('⏹️ 正在取消操作...');
-        
-        addToHistory({
-          type: currentOperation,
-          status: 'cancelled',
-          params: {}
-        });
       }
     }
 
-    // 操作历史管理
-    function addToHistory(operation) {
-      const history = getOperationHistory();
-      const historyItem = {
-        id: Date.now(),
-        timestamp: new Date().toISOString(),
-        ...operation
-      };
-      
-      history.unshift(historyItem);
-      
-      // 只保留最近50条记录
-      if (history.length > 50) {
-        history.splice(50);
-      }
-      
-      localStorage.setItem('feishu_operation_history', JSON.stringify(history));
-      updateHistoryDisplay();
-    }
-
-    function getOperationHistory() {
-      try {
-        return JSON.parse(localStorage.getItem('feishu_operation_history') || '[]');
-      } catch {
-        return [];
-      }
-    }
-
-    function loadHistory() {
-      updateHistoryDisplay();
-      log('🔄 操作历史已刷新');
-    }
-
-    function clearHistory() {
-      if (confirm('确定要清空所有操作历史吗？')) {
-        localStorage.removeItem('feishu_operation_history');
-        updateHistoryDisplay();
-        log('🗑️ 操作历史已清空');
-      }
-    }
-
-    function updateHistoryDisplay() {
-      const history = getOperationHistory();
-      const historyList = document.getElementById('historyList');
-      
-      if (history.length === 0) {
-        historyList.innerHTML = '<div class="history-empty">暂无操作历史</div>';
-        return;
-      }
-
-      historyList.innerHTML = history.map(item => `
-        <div class="history-item">
-          <div class="history-header">
-            <span class="history-title">
-              ${getOperationTypeName(item.type)}
-              <span class="history-status status-${item.status}">${getStatusName(item.status)}</span>
-            </span>
-            <span class="history-time">${formatTime(item.timestamp)}</span>
-          </div>
-          <div class="history-details">
-            ${getOperationDetails(item)}
-          </div>
-        </div>
-      `).join('');
-    }
-
-    function getOperationTypeName(type) {
-      const names = {
-        'preview': '差异预览',
-        'direct-copy': '直接复制',
-        'mapping-copy': '字段映射复制',
-        'filter-copy': '筛选复制',
-        'diff-copy': '差异复制'
-      };
-      return names[type] || type;
-    }
-
-    function getStatusName(status) {
-      const names = {
-        'success': '成功',
-        'error': '失败',
-        'partial': '部分成功',
-        'cancelled': '已取消'
-      };
-      return names[status] || status;
-    }
-
-    function getOperationDetails(item) {
-      let details = [];
-      
-      if (item.processed) {
-        details.push(`处理记录: ${item.processed} 条`);
-      }
-      
-      if (item.error) {
-        details.push(`错误信息: ${item.error}`);
-      }
-      
-      if (details.length === 0) {
-        details.push('无详细信息');
-      }
-      
-      return details.join(' | ');
-    }
-
-    function formatTime(timestamp) {
-      return new Date(timestamp).toLocaleString('zh-CN');
-    }
-
-    // 页面加载时初始化历史记录
+    // 页面加载时初始化
     window.addEventListener('load', () => {
-      updateHistoryDisplay();
       updateFilterDisplay();
     });
 
