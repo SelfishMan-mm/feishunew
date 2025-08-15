@@ -251,6 +251,156 @@
       color: #cf1322;
       border: 1px solid #ffccc7;
     }
+
+    /* 高级筛选样式 */
+    .filter-controls {
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr auto;
+      gap: 10px;
+      align-items: center;
+      margin-bottom: 15px;
+    }
+
+    .filter-item {
+      background: #f8f9fa;
+      border: 1px solid #dee2e6;
+      border-radius: 4px;
+      padding: 10px;
+      margin-bottom: 8px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .filter-text {
+      flex: 1;
+      font-size: 14px;
+    }
+
+    .filter-remove {
+      background: #dc3545;
+      color: white;
+      border: none;
+      border-radius: 3px;
+      padding: 4px 8px;
+      cursor: pointer;
+      font-size: 12px;
+    }
+
+    /* 进度条样式 */
+    .progress-container {
+      margin: 15px 0;
+    }
+
+    .progress-bar {
+      width: 100%;
+      height: 20px;
+      background: #f0f0f0;
+      border-radius: 10px;
+      overflow: hidden;
+      margin-bottom: 10px;
+    }
+
+    .progress-fill {
+      height: 100%;
+      background: linear-gradient(90deg, #4285f4, #34a853);
+      width: 0%;
+      transition: width 0.3s ease;
+      border-radius: 10px;
+    }
+
+    .progress-text {
+      text-align: center;
+      font-weight: bold;
+      color: #333;
+      margin-bottom: 10px;
+    }
+
+    .progress-details {
+      background: #f8f9fa;
+      border: 1px solid #dee2e6;
+      border-radius: 4px;
+      padding: 10px;
+      font-family: monospace;
+      font-size: 12px;
+      max-height: 150px;
+      overflow-y: auto;
+    }
+
+    /* 操作历史样式 */
+    .history-controls {
+      margin-bottom: 15px;
+      display: flex;
+      gap: 10px;
+    }
+
+    .history-controls button {
+      flex: 0 0 auto;
+      padding: 8px 16px;
+      font-size: 13px;
+    }
+
+    .history-item {
+      background: #f8f9fa;
+      border: 1px solid #dee2e6;
+      border-radius: 6px;
+      padding: 15px;
+      margin-bottom: 10px;
+    }
+
+    .history-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 8px;
+    }
+
+    .history-title {
+      font-weight: bold;
+      color: #333;
+    }
+
+    .history-time {
+      font-size: 12px;
+      color: #666;
+    }
+
+    .history-details {
+      font-size: 13px;
+      color: #555;
+      line-height: 1.4;
+    }
+
+    .history-status {
+      display: inline-block;
+      padding: 2px 8px;
+      border-radius: 12px;
+      font-size: 11px;
+      font-weight: bold;
+      margin-left: 8px;
+    }
+
+    .status-success {
+      background: #d4edda;
+      color: #155724;
+    }
+
+    .status-error {
+      background: #f8d7da;
+      color: #721c24;
+    }
+
+    .status-partial {
+      background: #fff3cd;
+      color: #856404;
+    }
+
+    .history-empty {
+      text-align: center;
+      color: #666;
+      padding: 30px;
+      font-style: italic;
+    }
   </style>
 </head>
 
@@ -323,7 +473,13 @@
             <input type="radio" name="operationMode" value="mapping" style="margin-right: 8px; width: auto;">
             🎯 字段映射
           </label>
-          <small style="margin-left: 24px;">手动配置字段对应关系</small>
+          <small style="margin-left: 24px; margin-bottom: 15px;">手动配置字段对应关系</small>
+          
+          <label style="display: flex; align-items: center; margin-bottom: 10px;">
+            <input type="radio" name="operationMode" value="filter" style="margin-right: 8px; width: auto;">
+            🔧 高级筛选
+          </label>
+          <small style="margin-left: 24px;">按条件筛选要复制的记录</small>
         </div>
         <div class="form-row">
           <button onclick="executeOperation()" id="operationBtn">🔍 开始分析</button>
@@ -336,7 +492,6 @@
         <div id="diffSummary"></div>
         <div class="form-row" style="gap: 10px;">
           <button onclick="executeCopy()" id="executeCopyBtn" style="background: #52c41a;">✅ 确认执行复制</button>
-          <button onclick="exportResults()" id="exportBtn" style="background: #1890ff; flex: 0 0 auto;">📄 导出结果</button>
         </div>
       </div>
 
@@ -352,6 +507,61 @@
         </div>
         <div class="form-row" style="margin-top: 20px;">
           <button onclick="executeWithMapping()" id="executeMappingBtn">🚀 使用映射执行复制</button>
+        </div>
+      </div>
+
+      <!-- 高级筛选 -->
+      <div class="section" id="advancedFilterSection" style="display:none;">
+        <h3>🔧 高级筛选</h3>
+        <div class="form-group">
+          <label>筛选条件</label>
+          <div class="filter-controls">
+            <select id="filterField">
+              <option value="">选择字段</option>
+            </select>
+            <select id="filterOperator">
+              <option value="equals">等于</option>
+              <option value="contains">包含</option>
+              <option value="startsWith">开头是</option>
+              <option value="endsWith">结尾是</option>
+              <option value="notEmpty">不为空</option>
+              <option value="isEmpty">为空</option>
+            </select>
+            <input id="filterValue" placeholder="筛选值" />
+            <button onclick="addFilter()" type="button">➕ 添加条件</button>
+          </div>
+        </div>
+        <div id="filterList"></div>
+        <div class="form-row" style="margin-top: 15px;">
+          <button onclick="previewWithFilter()" id="previewFilterBtn">🔍 预览筛选结果</button>
+          <button onclick="executeWithFilter()" id="executeFilterBtn" style="background: #52c41a;">🚀 执行筛选复制</button>
+        </div>
+      </div>
+
+      <!-- 批量操作进度 -->
+      <div class="section" id="progressSection" style="display:none;">
+        <h3>📊 操作进度</h3>
+        <div class="progress-container">
+          <div class="progress-bar">
+            <div class="progress-fill" id="progressFill"></div>
+          </div>
+          <div class="progress-text" id="progressText">准备中...</div>
+        </div>
+        <div class="progress-details" id="progressDetails"></div>
+        <div class="form-row" style="margin-top: 15px;">
+          <button onclick="cancelOperation()" id="cancelBtn" style="background: #ff4d4f;">⏹️ 取消操作</button>
+        </div>
+      </div>
+
+      <!-- 操作历史 -->
+      <div class="section" id="historySection">
+        <h3>📚 操作历史</h3>
+        <div class="history-controls">
+          <button onclick="loadHistory()" type="button">🔄 刷新历史</button>
+          <button onclick="clearHistory()" type="button" style="background: #ff7875;">🗑️ 清空历史</button>
+        </div>
+        <div id="historyList">
+          <div class="history-empty">暂无操作历史</div>
         </div>
       </div>
 
@@ -524,6 +734,9 @@
         case 'mapping':
           await showFieldMapping();
           break;
+        case 'filter':
+          await showAdvancedFilter();
+          break;
       }
     }
 
@@ -572,35 +785,55 @@
       const sourceTable = document.getElementById('sourceTable').value.trim();
       const targetTable = document.getElementById('targetTable').value.trim();
 
-      log('🚀 开始直接复制...');
-      
-      const operationBtn = document.getElementById('operationBtn');
-      operationBtn.disabled = true;
-      operationBtn.textContent = '复制中...';
+      if (!confirm('确定要直接复制所有数据吗？')) {
+        return;
+      }
+
+      await executeOperationWithProgress('copy', {
+        sourceTableId: sourceTable,
+        targetTableId: targetTable,
+        baseId: currentBaseId,
+        personalToken: currentToken
+      });
+    }
+
+    // 显示高级筛选界面
+    async function showAdvancedFilter() {
+      const sourceTable = document.getElementById('sourceTable').value.trim();
+
+      log('🔧 正在加载高级筛选界面...');
 
       try {
-        const response = await fetch('/api/copy', {
+        const response = await fetch('/api/fields', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            sourceTableId: sourceTable,
-            targetTableId: targetTable,
-            baseId: currentBaseId,
-            personalToken: currentToken
+          body: JSON.stringify({ 
+            baseId: currentBaseId, 
+            personalToken: currentToken,
+            tableId: sourceTable
           })
         });
 
         const data = await response.json();
         if (data.success) {
-          log(`✅ 复制完成！成功复制 ${data.copied} 条记录`);
+          // 填充字段选择器
+          const filterField = document.getElementById('filterField');
+          filterField.innerHTML = '<option value="">选择字段</option>';
+          
+          data.fields.forEach(field => {
+            const option = document.createElement('option');
+            option.value = field.field_id;
+            option.textContent = `${field.field_name} (${field.type})`;
+            filterField.appendChild(option);
+          });
+          
+          document.getElementById('advancedFilterSection').style.display = 'block';
+          log(`✅ 高级筛选界面已加载，可选择 ${data.fields.length} 个字段`);
         } else {
-          log(`❌ 复制失败: ${data.error}`);
+          log(`❌ 加载字段信息失败: ${data.error}`);
         }
       } catch (error) {
         log(`❌ 网络错误: ${error.message}`);
-      } finally {
-        operationBtn.disabled = false;
-        operationBtn.textContent = '🚀 开始复制';
       }
     }
 
@@ -702,72 +935,19 @@
         return;
       }
 
-      log(`🚀 开始执行复制操作，共 ${totalOperations} 条记录...`);
-      
-      const executeCopyBtn = document.getElementById('executeCopyBtn');
-      executeCopyBtn.disabled = true;
-      executeCopyBtn.textContent = '执行中...';
-
-      try {
-        const response = await fetch('/api/execute-diff-copy', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            sourceTableId: document.getElementById('sourceTable').value.trim(),
-            targetTableId: document.getElementById('targetTable').value.trim(),
-            baseId: currentBaseId,
-            personalToken: currentToken,
-            diffResults: results
-          })
-        });
-
-        const data = await response.json();
-        if (data.success) {
-          log(`✅ 复制执行完成！成功: ${data.successCount}, 失败: ${data.errorCount}`);
-          if (data.errors && data.errors.length > 0) {
-            log(`⚠️ 部分错误: ${data.errors.slice(0, 3).join(', ')}`);
-          }
-        } else {
-          log(`❌ 复制执行失败: ${data.error}`);
-        }
-      } catch (error) {
-        log(`❌ 网络错误: ${error.message}`);
-      } finally {
-        executeCopyBtn.disabled = false;
-        executeCopyBtn.textContent = '✅ 确认执行复制';
-      }
+      await executeOperationWithProgress('execute-diff-copy', {
+        sourceTableId: document.getElementById('sourceTable').value.trim(),
+        targetTableId: document.getElementById('targetTable').value.trim(),
+        baseId: currentBaseId,
+        personalToken: currentToken,
+        diffResults: results
+      });
     }
 
-    // 导出结果
-    function exportResults() {
-      if (!window.diffResults) {
-        return log('❌ 没有可导出的结果');
-      }
-
-      const results = window.diffResults;
-      const exportData = {
-        timestamp: new Date().toISOString(),
-        summary: {
-          new: results.new.length,
-          deleted: results.deleted.length,
-          modified: results.modified.length,
-          same: results.same.length
-        },
-        details: results
-      };
-
-      const blob = new Blob([JSON.stringify(exportData, null, 2)], { type: 'application/json' });
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = `diff-results-${new Date().toISOString().slice(0, 19).replace(/:/g, '-')}.json`;
-      document.body.appendChild(a);
-      a.click();
-      document.body.removeChild(a);
-      URL.revokeObjectURL(url);
-
-      log('📄 差异结果已导出为JSON文件');
-    }
+    // 全局变量
+    let currentFilters = [];
+    let operationCancelled = false;
+    let currentOperation = null;
 
     // 显示字段映射界面
     function displayFieldMapping(sourceFields, targetFields) {
@@ -843,37 +1023,17 @@
       const sourceTable = document.getElementById('sourceTable').value.trim();
       const targetTable = document.getElementById('targetTable').value.trim();
 
-      log(`🚀 开始使用自定义映射复制数据...`);
-      
-      const executeMappingBtn = document.getElementById('executeMappingBtn');
-      executeMappingBtn.disabled = true;
-      executeMappingBtn.textContent = '复制中...';
-
-      try {
-        const response = await fetch('/api/copy-with-mapping', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            sourceTableId: sourceTable,
-            targetTableId: targetTable,
-            baseId: currentBaseId,
-            personalToken: currentToken,
-            fieldMapping: window.currentFieldMapping
-          })
-        });
-
-        const data = await response.json();
-        if (data.success) {
-          log(`✅ 映射复制完成！成功复制 ${data.copied} 条记录`);
-        } else {
-          log(`❌ 映射复制失败: ${data.error}`);
-        }
-      } catch (error) {
-        log(`❌ 网络错误: ${error.message}`);
-      } finally {
-        executeMappingBtn.disabled = false;
-        executeMappingBtn.textContent = '🚀 使用映射执行复制';
+      if (!confirm('确定要使用当前字段映射执行复制吗？')) {
+        return;
       }
+
+      await executeOperationWithProgress('copy-with-mapping', {
+        sourceTableId: sourceTable,
+        targetTableId: targetTable,
+        baseId: currentBaseId,
+        personalToken: currentToken,
+        fieldMapping: window.currentFieldMapping
+      });
     }
 
     // 监听操作模式变化
@@ -893,9 +1053,353 @@
             case 'mapping':
               operationBtn.textContent = '🎯 配置映射';
               break;
+            case 'filter':
+              operationBtn.textContent = '🔧 配置筛选';
+              break;
           }
         });
       });
+    });
+
+    // 高级筛选功能
+    function addFilter() {
+      const field = document.getElementById('filterField').value;
+      const operator = document.getElementById('filterOperator').value;
+      const value = document.getElementById('filterValue').value;
+
+      if (!field) {
+        return log('❗ 请选择筛选字段');
+      }
+
+      if (['equals', 'contains', 'startsWith', 'endsWith'].includes(operator) && !value) {
+        return log('❗ 请输入筛选值');
+      }
+
+      const filter = { field, operator, value };
+      currentFilters.push(filter);
+      
+      updateFilterDisplay();
+      
+      // 清空输入
+      document.getElementById('filterField').value = '';
+      document.getElementById('filterValue').value = '';
+      
+      log(`✅ 已添加筛选条件: ${getFilterDescription(filter)}`);
+    }
+
+    function removeFilter(index) {
+      currentFilters.splice(index, 1);
+      updateFilterDisplay();
+      log('✅ 已移除筛选条件');
+    }
+
+    function updateFilterDisplay() {
+      const filterList = document.getElementById('filterList');
+      
+      if (currentFilters.length === 0) {
+        filterList.innerHTML = '<div style="color: #666; font-style: italic;">暂无筛选条件</div>';
+        return;
+      }
+
+      filterList.innerHTML = currentFilters.map((filter, index) => `
+        <div class="filter-item">
+          <span class="filter-text">${getFilterDescription(filter)}</span>
+          <button class="filter-remove" onclick="removeFilter(${index})">删除</button>
+        </div>
+      `).join('');
+    }
+
+    function getFilterDescription(filter) {
+      const operatorNames = {
+        equals: '等于',
+        contains: '包含',
+        startsWith: '开头是',
+        endsWith: '结尾是',
+        notEmpty: '不为空',
+        isEmpty: '为空'
+      };
+      
+      const fieldName = document.querySelector(`#filterField option[value="${filter.field}"]`)?.textContent || filter.field;
+      const operatorName = operatorNames[filter.operator];
+      
+      if (['notEmpty', 'isEmpty'].includes(filter.operator)) {
+        return `${fieldName} ${operatorName}`;
+      } else {
+        return `${fieldName} ${operatorName} "${filter.value}"`;
+      }
+    }
+
+    // 预览筛选结果
+    async function previewWithFilter() {
+      if (currentFilters.length === 0) {
+        return log('❗ 请至少添加一个筛选条件');
+      }
+
+      log('🔍 正在预览筛选结果...');
+      
+      try {
+        const response = await fetch('/api/preview-filter', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            sourceTableId: document.getElementById('sourceTable').value.trim(),
+            baseId: currentBaseId,
+            personalToken: currentToken,
+            filters: currentFilters
+          })
+        });
+
+        const data = await response.json();
+        if (data.success) {
+          log(`✅ 筛选预览完成！匹配 ${data.matchedCount} 条记录，总共 ${data.totalCount} 条记录`);
+          document.getElementById('advancedFilterSection').style.display = 'block';
+        } else {
+          log(`❌ 筛选预览失败: ${data.error}`);
+        }
+      } catch (error) {
+        log(`❌ 网络错误: ${error.message}`);
+      }
+    }
+
+    // 执行筛选复制
+    async function executeWithFilter() {
+      if (currentFilters.length === 0) {
+        return log('❗ 请至少添加一个筛选条件');
+      }
+
+      if (!confirm('确定要执行筛选复制吗？')) {
+        return;
+      }
+
+      await executeOperationWithProgress('filter-copy', {
+        sourceTableId: document.getElementById('sourceTable').value.trim(),
+        targetTableId: document.getElementById('targetTable').value.trim(),
+        baseId: currentBaseId,
+        personalToken: currentToken,
+        filters: currentFilters
+      });
+    }
+
+    // 带进度的操作执行
+    async function executeOperationWithProgress(operationType, params) {
+      operationCancelled = false;
+      currentOperation = operationType;
+      
+      // 显示进度区域
+      document.getElementById('progressSection').style.display = 'block';
+      updateProgress(0, '准备中...', '正在初始化操作...');
+
+      try {
+        const response = await fetch(`/api/${operationType}`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(params)
+        });
+
+        if (!response.ok) {
+          throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+        }
+
+        // 模拟进度更新（实际项目中应该通过WebSocket或轮询获取真实进度）
+        await simulateProgress(response);
+
+      } catch (error) {
+        log(`❌ 操作失败: ${error.message}`);
+        updateProgress(0, '操作失败', error.message);
+        
+        // 记录到历史
+        addToHistory({
+          type: operationType,
+          status: 'error',
+          error: error.message,
+          params: params
+        });
+      } finally {
+        currentOperation = null;
+        setTimeout(() => {
+          document.getElementById('progressSection').style.display = 'none';
+        }, 3000);
+      }
+    }
+
+    // 模拟进度更新
+    async function simulateProgress(response) {
+      const steps = [
+        { progress: 10, text: '正在分析数据...', detail: '读取源表格结构' },
+        { progress: 30, text: '正在处理记录...', detail: '应用筛选条件' },
+        { progress: 60, text: '正在复制数据...', detail: '写入目标表格' },
+        { progress: 90, text: '正在完成操作...', detail: '验证复制结果' },
+        { progress: 100, text: '操作完成', detail: '所有数据已成功处理' }
+      ];
+
+      for (const step of steps) {
+        if (operationCancelled) {
+          updateProgress(step.progress, '操作已取消', '用户取消了操作');
+          return;
+        }
+
+        updateProgress(step.progress, step.text, step.detail);
+        await new Promise(resolve => setTimeout(resolve, 1000));
+      }
+
+      // 获取最终结果
+      const data = await response.json();
+      if (data.success) {
+        log(`✅ 操作完成！处理了 ${data.processed || 0} 条记录`);
+        addToHistory({
+          type: currentOperation,
+          status: 'success',
+          processed: data.processed || 0,
+          params: {}
+        });
+      } else {
+        log(`❌ 操作失败: ${data.error}`);
+        addToHistory({
+          type: currentOperation,
+          status: 'error',
+          error: data.error,
+          params: {}
+        });
+      }
+    }
+
+    // 更新进度显示
+    function updateProgress(percentage, text, detail) {
+      document.getElementById('progressFill').style.width = `${percentage}%`;
+      document.getElementById('progressText').textContent = `${text} (${percentage}%)`;
+      
+      const detailsElement = document.getElementById('progressDetails');
+      detailsElement.textContent += `[${new Date().toLocaleTimeString()}] ${detail}\n`;
+      detailsElement.scrollTop = detailsElement.scrollHeight;
+    }
+
+    // 取消操作
+    function cancelOperation() {
+      if (currentOperation) {
+        operationCancelled = true;
+        log('⏹️ 正在取消操作...');
+        
+        addToHistory({
+          type: currentOperation,
+          status: 'cancelled',
+          params: {}
+        });
+      }
+    }
+
+    // 操作历史管理
+    function addToHistory(operation) {
+      const history = getOperationHistory();
+      const historyItem = {
+        id: Date.now(),
+        timestamp: new Date().toISOString(),
+        ...operation
+      };
+      
+      history.unshift(historyItem);
+      
+      // 只保留最近50条记录
+      if (history.length > 50) {
+        history.splice(50);
+      }
+      
+      localStorage.setItem('feishu_operation_history', JSON.stringify(history));
+      updateHistoryDisplay();
+    }
+
+    function getOperationHistory() {
+      try {
+        return JSON.parse(localStorage.getItem('feishu_operation_history') || '[]');
+      } catch {
+        return [];
+      }
+    }
+
+    function loadHistory() {
+      updateHistoryDisplay();
+      log('🔄 操作历史已刷新');
+    }
+
+    function clearHistory() {
+      if (confirm('确定要清空所有操作历史吗？')) {
+        localStorage.removeItem('feishu_operation_history');
+        updateHistoryDisplay();
+        log('🗑️ 操作历史已清空');
+      }
+    }
+
+    function updateHistoryDisplay() {
+      const history = getOperationHistory();
+      const historyList = document.getElementById('historyList');
+      
+      if (history.length === 0) {
+        historyList.innerHTML = '<div class="history-empty">暂无操作历史</div>';
+        return;
+      }
+
+      historyList.innerHTML = history.map(item => `
+        <div class="history-item">
+          <div class="history-header">
+            <span class="history-title">
+              ${getOperationTypeName(item.type)}
+              <span class="history-status status-${item.status}">${getStatusName(item.status)}</span>
+            </span>
+            <span class="history-time">${formatTime(item.timestamp)}</span>
+          </div>
+          <div class="history-details">
+            ${getOperationDetails(item)}
+          </div>
+        </div>
+      `).join('');
+    }
+
+    function getOperationTypeName(type) {
+      const names = {
+        'preview': '差异预览',
+        'direct-copy': '直接复制',
+        'mapping-copy': '字段映射复制',
+        'filter-copy': '筛选复制',
+        'diff-copy': '差异复制'
+      };
+      return names[type] || type;
+    }
+
+    function getStatusName(status) {
+      const names = {
+        'success': '成功',
+        'error': '失败',
+        'partial': '部分成功',
+        'cancelled': '已取消'
+      };
+      return names[status] || status;
+    }
+
+    function getOperationDetails(item) {
+      let details = [];
+      
+      if (item.processed) {
+        details.push(`处理记录: ${item.processed} 条`);
+      }
+      
+      if (item.error) {
+        details.push(`错误信息: ${item.error}`);
+      }
+      
+      if (details.length === 0) {
+        details.push('无详细信息');
+      }
+      
+      return details.join(' | ');
+    }
+
+    function formatTime(timestamp) {
+      return new Date(timestamp).toLocaleString('zh-CN');
+    }
+
+    // 页面加载时初始化历史记录
+    window.addEventListener('load', () => {
+      updateHistoryDisplay();
+      updateFilterDisplay();
     });
 
     // 日志函数
