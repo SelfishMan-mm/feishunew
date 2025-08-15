@@ -114,6 +114,143 @@
       color: #666;
       font-size: 0.9em;
     }
+
+    /* 差异结果样式 */
+    .diff-summary {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+      gap: 10px;
+      margin-bottom: 15px;
+    }
+
+    .diff-item {
+      padding: 12px;
+      border-radius: 6px;
+      text-align: center;
+      font-size: 13px;
+      border: 1px solid;
+    }
+
+    .diff-new {
+      background: #f6ffed;
+      border-color: #b7eb8f;
+      color: #389e0d;
+    }
+
+    .diff-deleted {
+      background: #fff2f0;
+      border-color: #ffccc7;
+      color: #cf1322;
+    }
+
+    .diff-modified {
+      background: #fffbe6;
+      border-color: #ffe58f;
+      color: #d48806;
+    }
+
+    .diff-same {
+      background: #f0f7ff;
+      border-color: #91d5ff;
+      color: #1890ff;
+    }
+
+    .diff-count {
+      font-size: 18px;
+      font-weight: bold;
+      margin-bottom: 4px;
+    }
+
+    /* 字段映射样式 */
+    #fieldMappingContainer {
+      border: 1px solid #ddd;
+      border-radius: 6px;
+      overflow: hidden;
+    }
+
+    .mapping-header {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      background: #f5f5f5;
+      border-bottom: 1px solid #ddd;
+    }
+
+    .source-header, .target-header {
+      padding: 12px;
+      font-weight: bold;
+      text-align: center;
+      border-right: 1px solid #ddd;
+    }
+
+    .target-header {
+      border-right: none;
+    }
+
+    .mapping-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      border-bottom: 1px solid #eee;
+      min-height: 50px;
+      align-items: center;
+    }
+
+    .mapping-row:last-child {
+      border-bottom: none;
+    }
+
+    .source-field, .target-field {
+      padding: 12px;
+      border-right: 1px solid #eee;
+      display: flex;
+      align-items: center;
+    }
+
+    .target-field {
+      border-right: none;
+    }
+
+    .field-info {
+      flex: 1;
+    }
+
+    .field-name {
+      font-weight: 500;
+      color: #333;
+    }
+
+    .field-type {
+      font-size: 12px;
+      color: #666;
+      margin-top: 2px;
+    }
+
+    .mapping-select {
+      width: 100%;
+      padding: 6px 8px;
+      border: 1px solid #ddd;
+      border-radius: 4px;
+      font-size: 13px;
+    }
+
+    .mapping-status {
+      display: inline-block;
+      padding: 2px 6px;
+      border-radius: 3px;
+      font-size: 11px;
+      margin-left: 8px;
+    }
+
+    .status-mapped {
+      background: #f6ffed;
+      color: #389e0d;
+      border: 1px solid #b7eb8f;
+    }
+
+    .status-unmapped {
+      background: #fff2f0;
+      color: #cf1322;
+      border: 1px solid #ffccc7;
+    }
   </style>
 </head>
 
@@ -157,8 +294,64 @@
             <button type="button" onclick="showTableSelector('target')">📋 选择表格</button>
           </div>
         </div>
+        <div class="form-group">
+          <label>主键字段（用于差异对比）</label>
+          <select id="primaryKeyField">
+            <option value="">自动检测</option>
+          </select>
+          <small>💡 选择用于匹配记录的主键字段，如ID、编号等</small>
+        </div>
+      </div>
+
+      <!-- 操作模式选择 -->
+      <div class="section" id="operationSection" style="display:none;">
+        <h3>⚙️ 操作模式</h3>
+        <div class="form-group">
+          <label style="display: flex; align-items: center; margin-bottom: 10px;">
+            <input type="radio" name="operationMode" value="preview" checked style="margin-right: 8px; width: auto;">
+            🔍 预览差异（推荐）
+          </label>
+          <small style="margin-left: 24px; margin-bottom: 15px;">先分析差异，再决定是否执行复制</small>
+          
+          <label style="display: flex; align-items: center; margin-bottom: 10px;">
+            <input type="radio" name="operationMode" value="direct" style="margin-right: 8px; width: auto;">
+            🚀 直接复制
+          </label>
+          <small style="margin-left: 24px; margin-bottom: 15px;">跳过分析直接执行复制</small>
+          
+          <label style="display: flex; align-items: center; margin-bottom: 10px;">
+            <input type="radio" name="operationMode" value="mapping" style="margin-right: 8px; width: auto;">
+            🎯 字段映射
+          </label>
+          <small style="margin-left: 24px;">手动配置字段对应关系</small>
+        </div>
         <div class="form-row">
-          <button onclick="startCopy()">🚀 开始复制</button>
+          <button onclick="executeOperation()" id="operationBtn">🔍 开始分析</button>
+        </div>
+      </div>
+
+      <!-- 差异结果显示 -->
+      <div class="section" id="diffResultSection" style="display:none;">
+        <h3>📊 差异分析结果</h3>
+        <div id="diffSummary"></div>
+        <div class="form-row" style="gap: 10px;">
+          <button onclick="executeCopy()" id="executeCopyBtn" style="background: #52c41a;">✅ 确认执行复制</button>
+          <button onclick="exportResults()" id="exportBtn" style="background: #1890ff; flex: 0 0 auto;">📄 导出结果</button>
+        </div>
+      </div>
+
+      <!-- 字段映射界面 -->
+      <div class="section" id="fieldMappingSection" style="display:none;">
+        <h3>🎯 字段映射配置</h3>
+        <div id="fieldMappingContainer">
+          <div class="mapping-header">
+            <div class="source-header">源表格字段</div>
+            <div class="target-header">目标表格字段</div>
+          </div>
+          <div id="fieldMappingList"></div>
+        </div>
+        <div class="form-row" style="margin-top: 20px;">
+          <button onclick="executeWithMapping()" id="executeMappingBtn">🚀 使用映射执行复制</button>
         </div>
       </div>
 
@@ -223,6 +416,7 @@
           currentToken = token;
           currentBaseId = baseId;
           document.getElementById('tableSection').style.display = 'block';
+          document.getElementById('operationSection').style.display = 'block';
           log(`✅ 授权成功！可访问 ${data.tableCount} 个表格`);
         } else {
           log(`❌ 授权失败: ${data.error}`);
@@ -259,6 +453,11 @@
               const targetInput = type === 'source' ? 'sourceTable' : 'targetTable';
               document.getElementById(targetInput).value = tables[index].table_id;
               log(`✅ 已选择${type === 'source' ? '源' : '目标'}表格: ${tables[index].name}`);
+              
+              // 如果选择的是源表格，自动加载主键字段选项
+              if (type === 'source') {
+                await loadPrimaryKeyOptions(tables[index].table_id);
+              }
             }
           }
         } else {
@@ -269,10 +468,43 @@
       }
     }
 
-    // 开始复制
-    async function startCopy() {
+    // 加载主键字段选项
+    async function loadPrimaryKeyOptions(tableId) {
+      try {
+        const response = await fetch('/api/fields', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ 
+            baseId: currentBaseId, 
+            personalToken: currentToken,
+            tableId: tableId
+          })
+        });
+
+        const data = await response.json();
+        if (data.success) {
+          const select = document.getElementById('primaryKeyField');
+          select.innerHTML = '<option value="">自动检测</option>';
+          
+          data.fields.forEach(field => {
+            const option = document.createElement('option');
+            option.value = field.field_id;
+            option.textContent = `${field.field_name} (${field.type})`;
+            select.appendChild(option);
+          });
+          
+          log(`✅ 已加载 ${data.fields.length} 个字段选项`);
+        }
+      } catch (error) {
+        log(`❌ 加载字段失败: ${error.message}`);
+      }
+    }
+
+    // 执行操作（根据选择的模式）
+    async function executeOperation() {
       const sourceTable = document.getElementById('sourceTable').value.trim();
       const targetTable = document.getElementById('targetTable').value.trim();
+      const operationMode = document.querySelector('input[name="operationMode"]:checked').value;
 
       if (!sourceTable || !targetTable) {
         return log('❗ 请先填写源表格和目标表格ID');
@@ -282,7 +514,69 @@
         return log('❗ 请先完成授权测试');
       }
 
-      log('🚀 开始复制数据...');
+      switch (operationMode) {
+        case 'preview':
+          await previewDifferences();
+          break;
+        case 'direct':
+          await directCopy();
+          break;
+        case 'mapping':
+          await showFieldMapping();
+          break;
+      }
+    }
+
+    // 预览差异
+    async function previewDifferences() {
+      const sourceTable = document.getElementById('sourceTable').value.trim();
+      const targetTable = document.getElementById('targetTable').value.trim();
+      const primaryKey = document.getElementById('primaryKeyField').value;
+
+      log('🔍 开始分析差异...');
+      
+      const operationBtn = document.getElementById('operationBtn');
+      operationBtn.disabled = true;
+      operationBtn.textContent = '分析中...';
+
+      try {
+        const response = await fetch('/api/analyze-diff', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            sourceTableId: sourceTable,
+            targetTableId: targetTable,
+            baseId: currentBaseId,
+            personalToken: currentToken,
+            primaryKeyField: primaryKey
+          })
+        });
+
+        const data = await response.json();
+        if (data.success) {
+          displayDiffResults(data.results);
+          log(`✅ 差异分析完成！新增: ${data.results.new.length}, 删除: ${data.results.deleted.length}, 修改: ${data.results.modified.length}, 相同: ${data.results.same.length}`);
+        } else {
+          log(`❌ 差异分析失败: ${data.error}`);
+        }
+      } catch (error) {
+        log(`❌ 网络错误: ${error.message}`);
+      } finally {
+        operationBtn.disabled = false;
+        operationBtn.textContent = '🔍 开始分析';
+      }
+    }
+
+    // 直接复制
+    async function directCopy() {
+      const sourceTable = document.getElementById('sourceTable').value.trim();
+      const targetTable = document.getElementById('targetTable').value.trim();
+
+      log('🚀 开始直接复制...');
+      
+      const operationBtn = document.getElementById('operationBtn');
+      operationBtn.disabled = true;
+      operationBtn.textContent = '复制中...';
 
       try {
         const response = await fetch('/api/copy', {
@@ -304,8 +598,305 @@
         }
       } catch (error) {
         log(`❌ 网络错误: ${error.message}`);
+      } finally {
+        operationBtn.disabled = false;
+        operationBtn.textContent = '🚀 开始复制';
       }
     }
+
+    // 显示字段映射界面
+    async function showFieldMapping() {
+      const sourceTable = document.getElementById('sourceTable').value.trim();
+      const targetTable = document.getElementById('targetTable').value.trim();
+
+      log('🎯 正在加载字段映射界面...');
+
+      try {
+        const [sourceResponse, targetResponse] = await Promise.all([
+          fetch('/api/fields', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ 
+              baseId: currentBaseId, 
+              personalToken: currentToken,
+              tableId: sourceTable
+            })
+          }),
+          fetch('/api/fields', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ 
+              baseId: currentBaseId, 
+              personalToken: currentToken,
+              tableId: targetTable
+            })
+          })
+        ]);
+
+        const [sourceData, targetData] = await Promise.all([
+          sourceResponse.json(),
+          targetResponse.json()
+        ]);
+
+        if (sourceData.success && targetData.success) {
+          displayFieldMapping(sourceData.fields, targetData.fields);
+          document.getElementById('fieldMappingSection').style.display = 'block';
+          log(`✅ 字段映射界面已加载`);
+        } else {
+          log(`❌ 加载字段信息失败`);
+        }
+      } catch (error) {
+        log(`❌ 网络错误: ${error.message}`);
+      }
+    }
+
+    // 显示差异结果
+    function displayDiffResults(results) {
+      const diffResultSection = document.getElementById('diffResultSection');
+      const diffSummary = document.getElementById('diffSummary');
+      
+      diffResultSection.style.display = 'block';
+      
+      diffSummary.innerHTML = `
+        <div class="diff-summary">
+          <div class="diff-item diff-new">
+            <div class="diff-count">${results.new.length}</div>
+            <div>新增记录</div>
+          </div>
+          <div class="diff-item diff-deleted">
+            <div class="diff-count">${results.deleted.length}</div>
+            <div>删除记录</div>
+          </div>
+          <div class="diff-item diff-modified">
+            <div class="diff-count">${results.modified.length}</div>
+            <div>修改记录</div>
+          </div>
+          <div class="diff-item diff-same">
+            <div class="diff-count">${results.same.length}</div>
+            <div>相同记录</div>
+          </div>
+        </div>
+        <div style="font-size: 12px; color: #666; margin-top: 8px;">
+          💡 新增和修改的记录将被复制到目标表格
+        </div>
+      `;
+      
+      // 存储结果供后续使用
+      window.diffResults = results;
+    }
+
+    // 执行复制（基于差异结果）
+    async function executeCopy() {
+      if (!window.diffResults) {
+        return log('❌ 没有差异分析结果');
+      }
+
+      const results = window.diffResults;
+      const totalOperations = results.new.length + results.modified.length;
+      
+      if (totalOperations === 0) {
+        return log('ℹ️ 没有需要复制的记录');
+      }
+
+      if (!confirm(`确定要执行复制操作吗？\n将处理 ${totalOperations} 条记录（${results.new.length} 新增，${results.modified.length} 修改）`)) {
+        return;
+      }
+
+      log(`🚀 开始执行复制操作，共 ${totalOperations} 条记录...`);
+      
+      const executeCopyBtn = document.getElementById('executeCopyBtn');
+      executeCopyBtn.disabled = true;
+      executeCopyBtn.textContent = '执行中...';
+
+      try {
+        const response = await fetch('/api/execute-diff-copy', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            sourceTableId: document.getElementById('sourceTable').value.trim(),
+            targetTableId: document.getElementById('targetTable').value.trim(),
+            baseId: currentBaseId,
+            personalToken: currentToken,
+            diffResults: results
+          })
+        });
+
+        const data = await response.json();
+        if (data.success) {
+          log(`✅ 复制执行完成！成功: ${data.successCount}, 失败: ${data.errorCount}`);
+          if (data.errors && data.errors.length > 0) {
+            log(`⚠️ 部分错误: ${data.errors.slice(0, 3).join(', ')}`);
+          }
+        } else {
+          log(`❌ 复制执行失败: ${data.error}`);
+        }
+      } catch (error) {
+        log(`❌ 网络错误: ${error.message}`);
+      } finally {
+        executeCopyBtn.disabled = false;
+        executeCopyBtn.textContent = '✅ 确认执行复制';
+      }
+    }
+
+    // 导出结果
+    function exportResults() {
+      if (!window.diffResults) {
+        return log('❌ 没有可导出的结果');
+      }
+
+      const results = window.diffResults;
+      const exportData = {
+        timestamp: new Date().toISOString(),
+        summary: {
+          new: results.new.length,
+          deleted: results.deleted.length,
+          modified: results.modified.length,
+          same: results.same.length
+        },
+        details: results
+      };
+
+      const blob = new Blob([JSON.stringify(exportData, null, 2)], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `diff-results-${new Date().toISOString().slice(0, 19).replace(/:/g, '-')}.json`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+
+      log('📄 差异结果已导出为JSON文件');
+    }
+
+    // 显示字段映射界面
+    function displayFieldMapping(sourceFields, targetFields) {
+      const fieldMappingList = document.getElementById('fieldMappingList');
+      
+      // 自动建立字段映射
+      const autoMapping = {};
+      const targetFieldMap = new Map(targetFields.map(f => [f.field_name.toLowerCase(), f]));
+      
+      let mappingHtml = '';
+      sourceFields.forEach(sourceField => {
+        const matchedTarget = targetFieldMap.get(sourceField.field_name.toLowerCase());
+        const mappedFieldId = matchedTarget ? matchedTarget.field_id : '';
+        
+        if (matchedTarget) {
+          autoMapping[sourceField.field_id] = matchedTarget.field_id;
+        }
+        
+        mappingHtml += `
+          <div class="mapping-row">
+            <div class="source-field">
+              <div class="field-info">
+                <div class="field-name">${sourceField.field_name}</div>
+                <div class="field-type">${sourceField.type}</div>
+              </div>
+              <span class="mapping-status ${matchedTarget ? 'status-mapped' : 'status-unmapped'}">
+                ${matchedTarget ? '已映射' : '未映射'}
+              </span>
+            </div>
+            <div class="target-field">
+              <select class="mapping-select" data-source-field="${sourceField.field_id}" onchange="updateMappingStatus(this)">
+                <option value="">-- 选择目标字段 --</option>
+                ${targetFields.map(tf => 
+                  `<option value="${tf.field_id}" ${tf.field_id === mappedFieldId ? 'selected' : ''}>${tf.field_name} (${tf.type})</option>`
+                ).join('')}
+              </select>
+            </div>
+          </div>
+        `;
+      });
+      
+      fieldMappingList.innerHTML = mappingHtml;
+      
+      // 存储当前映射
+      window.currentFieldMapping = autoMapping;
+      
+      log(`✅ 自动映射了 ${Object.keys(autoMapping).length} 个字段`);
+    }
+
+    // 更新映射状态
+    function updateMappingStatus(selectElement) {
+      const row = selectElement.closest('.mapping-row');
+      const statusElement = row.querySelector('.mapping-status');
+      const sourceFieldId = selectElement.dataset.sourceField;
+      
+      if (selectElement.value) {
+        statusElement.textContent = '已映射';
+        statusElement.className = 'mapping-status status-mapped';
+        window.currentFieldMapping[sourceFieldId] = selectElement.value;
+      } else {
+        statusElement.textContent = '未映射';
+        statusElement.className = 'mapping-status status-unmapped';
+        delete window.currentFieldMapping[sourceFieldId];
+      }
+    }
+
+    // 使用映射执行复制
+    async function executeWithMapping() {
+      if (!window.currentFieldMapping || Object.keys(window.currentFieldMapping).length === 0) {
+        return log('❗ 请至少配置一个字段映射');
+      }
+
+      const sourceTable = document.getElementById('sourceTable').value.trim();
+      const targetTable = document.getElementById('targetTable').value.trim();
+
+      log(`🚀 开始使用自定义映射复制数据...`);
+      
+      const executeMappingBtn = document.getElementById('executeMappingBtn');
+      executeMappingBtn.disabled = true;
+      executeMappingBtn.textContent = '复制中...';
+
+      try {
+        const response = await fetch('/api/copy-with-mapping', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            sourceTableId: sourceTable,
+            targetTableId: targetTable,
+            baseId: currentBaseId,
+            personalToken: currentToken,
+            fieldMapping: window.currentFieldMapping
+          })
+        });
+
+        const data = await response.json();
+        if (data.success) {
+          log(`✅ 映射复制完成！成功复制 ${data.copied} 条记录`);
+        } else {
+          log(`❌ 映射复制失败: ${data.error}`);
+        }
+      } catch (error) {
+        log(`❌ 网络错误: ${error.message}`);
+      } finally {
+        executeMappingBtn.disabled = false;
+        executeMappingBtn.textContent = '🚀 使用映射执行复制';
+      }
+    }
+
+    // 监听操作模式变化
+    document.addEventListener('DOMContentLoaded', () => {
+      document.querySelectorAll('input[name="operationMode"]').forEach(radio => {
+        radio.addEventListener('change', () => {
+          const operationBtn = document.getElementById('operationBtn');
+          const selectedMode = document.querySelector('input[name="operationMode"]:checked').value;
+          
+          switch (selectedMode) {
+            case 'preview':
+              operationBtn.textContent = '🔍 开始分析';
+              break;
+            case 'direct':
+              operationBtn.textContent = '🚀 开始复制';
+              break;
+            case 'mapping':
+              operationBtn.textContent = '🎯 配置映射';
+              break;
+          }
+        });
+      });
+    });
 
     // 日志函数
     function log(message) {

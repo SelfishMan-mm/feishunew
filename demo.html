@@ -1,0 +1,326 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>Phase 2 功能演示</title>
+  <style>
+    body {
+      font-family: 'Segoe UI', Arial, sans-serif;
+      margin: 0;
+      padding: 20px;
+      background: #f5f5f5;
+    }
+    .container {
+      max-width: 1200px;
+      margin: 0 auto;
+      background: white;
+      border-radius: 8px;
+      box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+      overflow: hidden;
+    }
+    .header {
+      background: linear-gradient(135deg, #4285f4, #34a853);
+      color: white;
+      padding: 30px;
+      text-align: center;
+    }
+    .content {
+      padding: 30px;
+    }
+    .feature-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+      gap: 30px;
+      margin-bottom: 40px;
+    }
+    .feature-card {
+      border: 1px solid #e0e0e0;
+      border-radius: 8px;
+      padding: 25px;
+      background: #fafafa;
+    }
+    .feature-title {
+      color: #4285f4;
+      font-size: 18px;
+      font-weight: bold;
+      margin-bottom: 15px;
+      display: flex;
+      align-items: center;
+    }
+    .feature-title .emoji {
+      font-size: 24px;
+      margin-right: 10px;
+    }
+    .feature-desc {
+      color: #666;
+      line-height: 1.6;
+      margin-bottom: 15px;
+    }
+    .feature-list {
+      list-style: none;
+      padding: 0;
+    }
+    .feature-list li {
+      padding: 5px 0;
+      color: #333;
+    }
+    .feature-list li:before {
+      content: "✅ ";
+      color: #34a853;
+      font-weight: bold;
+    }
+    .demo-section {
+      background: #f8f9fa;
+      border-radius: 8px;
+      padding: 25px;
+      margin-bottom: 30px;
+    }
+    .demo-title {
+      color: #333;
+      font-size: 20px;
+      font-weight: bold;
+      margin-bottom: 15px;
+    }
+    .screenshot {
+      width: 100%;
+      max-width: 600px;
+      border: 1px solid #ddd;
+      border-radius: 6px;
+      margin: 15px 0;
+    }
+    .comparison-table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 20px 0;
+    }
+    .comparison-table th,
+    .comparison-table td {
+      border: 1px solid #ddd;
+      padding: 12px;
+      text-align: left;
+    }
+    .comparison-table th {
+      background: #f5f5f5;
+      font-weight: bold;
+    }
+    .status-yes {
+      color: #34a853;
+      font-weight: bold;
+    }
+    .status-no {
+      color: #ea4335;
+      font-weight: bold;
+    }
+    .highlight {
+      background: #fff3cd;
+      border: 1px solid #ffeaa7;
+      border-radius: 4px;
+      padding: 15px;
+      margin: 15px 0;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <h1>🚀 Phase 2 功能演示</h1>
+      <p>飞书多维表格数据同步工具 - 用户体验全面升级</p>
+    </div>
+
+    <div class="content">
+      <!-- 核心功能介绍 -->
+      <div class="feature-grid">
+        <div class="feature-card">
+          <div class="feature-title">
+            <span class="emoji">🔍</span>
+            差异对比功能
+          </div>
+          <div class="feature-desc">
+            最重要的新功能！在执行复制前，先分析源表格和目标表格的差异，让你清楚知道将要发生什么变化。
+          </div>
+          <ul class="feature-list">
+            <li>智能主键检测</li>
+            <li>四类差异分析（新增/删除/修改/相同）</li>
+            <li>可视化差异统计</li>
+            <li>二次确认机制</li>
+            <li>结果导出功能</li>
+          </ul>
+        </div>
+
+        <div class="feature-card">
+          <div class="feature-title">
+            <span class="emoji">🎯</span>
+            手动字段映射
+          </div>
+          <div class="feature-desc">
+            当源表格和目标表格的字段名不完全匹配时，可以手动配置字段对应关系，实现精确的数据映射。
+          </div>
+          <ul class="feature-list">
+            <li>自动匹配同名字段</li>
+            <li>可视化映射界面</li>
+            <li>实时映射状态显示</li>
+            <li>灵活的字段选择</li>
+            <li>支持部分字段映射</li>
+          </ul>
+        </div>
+
+        <div class="feature-card">
+          <div class="feature-title">
+            <span class="emoji">🎛️</span>
+            三种操作模式
+          </div>
+          <div class="feature-desc">
+            根据不同的使用场景，提供三种操作模式，满足从新手到专家的各种需求。
+          </div>
+          <ul class="feature-list">
+            <li>预览差异（推荐新手）</li>
+            <li>直接复制（适合熟练用户）</li>
+            <li>字段映射（处理复杂场景）</li>
+          </ul>
+        </div>
+      </div>
+
+      <!-- 功能对比 -->
+      <div class="demo-section">
+        <div class="demo-title">📊 Phase 1 vs Phase 2 功能对比</div>
+        <table class="comparison-table">
+          <thead>
+            <tr>
+              <th>功能特性</th>
+              <th>Phase 1</th>
+              <th>Phase 2</th>
+              <th>改进说明</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>基础数据复制</td>
+              <td class="status-yes">✅</td>
+              <td class="status-yes">✅</td>
+              <td>保持原有功能</td>
+            </tr>
+            <tr>
+              <td>差异分析</td>
+              <td class="status-no">❌</td>
+              <td class="status-yes">✅</td>
+              <td>新增核心功能</td>
+            </tr>
+            <tr>
+              <td>二次确认</td>
+              <td class="status-no">❌</td>
+              <td class="status-yes">✅</td>
+              <td>防止误操作</td>
+            </tr>
+            <tr>
+              <td>字段映射</td>
+              <td>仅自动</td>
+              <td class="status-yes">自动+手动</td>
+              <td>增加手动配置</td>
+            </tr>
+            <tr>
+              <td>主键选择</td>
+              <td>固定第一个字段</td>
+              <td class="status-yes">可选择</td>
+              <td>支持自定义主键</td>
+            </tr>
+            <tr>
+              <td>结果导出</td>
+              <td class="status-no">❌</td>
+              <td class="status-yes">✅</td>
+              <td>支持JSON导出</td>
+            </tr>
+            <tr>
+              <td>操作模式</td>
+              <td>单一模式</td>
+              <td class="status-yes">三种模式</td>
+              <td>适应不同场景</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <!-- 使用流程 -->
+      <div class="demo-section">
+        <div class="demo-title">📋 推荐使用流程</div>
+        
+        <div class="highlight">
+          <strong>💡 最佳实践建议：</strong>
+          <ol>
+            <li><strong>首次使用</strong>：选择"预览差异"模式，了解数据变化情况</li>
+            <li><strong>字段不匹配</strong>：使用"字段映射"模式手动配置字段关系</li>
+            <li><strong>熟练后</strong>：可以使用"直接复制"模式提高效率</li>
+            <li><strong>重要数据</strong>：建议先导出差异结果作为备份</li>
+          </ol>
+        </div>
+
+        <h4>🔍 预览差异模式（推荐）</h4>
+        <ol>
+          <li>输入PersonalBaseToken完成授权</li>
+          <li>选择源表格和目标表格</li>
+          <li>选择主键字段（或使用自动检测）</li>
+          <li>选择"预览差异"模式</li>
+          <li>点击"开始分析"查看差异结果</li>
+          <li>确认无误后点击"确认执行复制"</li>
+        </ol>
+
+        <h4>🎯 字段映射模式</h4>
+        <ol>
+          <li>完成基础配置（同上）</li>
+          <li>选择"字段映射"模式</li>
+          <li>点击"配置映射"进入映射界面</li>
+          <li>调整字段对应关系</li>
+          <li>点击"使用映射执行复制"</li>
+        </ol>
+      </div>
+
+      <!-- 技术亮点 -->
+      <div class="demo-section">
+        <div class="demo-title">⚡ 技术实现亮点</div>
+        
+        <h4>🧠 智能化功能</h4>
+        <ul>
+          <li><strong>自动主键检测</strong>：优先选择包含"ID"、"编号"、"序号"的字段</li>
+          <li><strong>智能字段映射</strong>：自动匹配同名字段，减少手动配置工作</li>
+          <li><strong>高效差异算法</strong>：快速对比大量记录，准确分类差异类型</li>
+        </ul>
+
+        <h4>🏗️ 模块化设计</h4>
+        <ul>
+          <li><code>analyze-diff.js</code> - 差异分析核心逻辑</li>
+          <li><code>execute-diff-copy.js</code> - 基于差异结果的精确复制</li>
+          <li><code>copy-with-mapping.js</code> - 自定义字段映射复制</li>
+          <li><code>fields.js</code> - 字段信息获取</li>
+          <li><code>tables.js</code> - 表格列表获取</li>
+        </ul>
+
+        <h4>🎨 用户体验优化</h4>
+        <ul>
+          <li><strong>实时状态反馈</strong>：操作进度、详细日志、错误提示</li>
+          <li><strong>可视化界面</strong>：差异统计卡片、字段映射状态指示</li>
+          <li><strong>防误操作</strong>：二次确认对话框、操作前预览</li>
+        </ul>
+      </div>
+
+      <!-- 下一步计划 -->
+      <div class="demo-section">
+        <div class="demo-title">🔮 Phase 3 展望</div>
+        <p>基于Phase 2的坚实基础，Phase 3将重点实现：</p>
+        <ul>
+          <li><strong>结果导出增强</strong>：支持CSV格式，包含详细的差异信息</li>
+          <li><strong>批量操作优化</strong>：进度条显示、操作取消功能</li>
+          <li><strong>高级筛选</strong>：支持按条件筛选要复制的记录</li>
+          <li><strong>操作历史</strong>：记录每次操作的详细信息</li>
+        </ul>
+      </div>
+
+      <div style="text-align: center; padding: 30px; color: #666;">
+        <h3>🎉 Phase 2 开发完成！</h3>
+        <p>从"能用"到"好用"的重要升级</p>
+        <p style="font-size: 14px; margin-top: 20px;">
+          如需测试完整功能，请使用 <code>npm run dev</code> 启动开发服务器
+        </p>
+      </div>
+    </div>
+  </div>
+</body>
+</html>
