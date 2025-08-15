@@ -10,106 +10,123 @@
     }
 
     body {
-      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Arial, sans-serif;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Microsoft YaHei', sans-serif;
       margin: 0;
-      padding: 20px;
-      background: #f8f9fa;
-      color: #333;
+      padding: 24px;
+      background: #f5f7fa;
+      color: #2c3e50;
+      min-height: 100vh;
     }
 
     .container {
-      max-width: 600px;
+      max-width: 700px;
       margin: 0 auto;
-      background: white;
-      border-radius: 12px;
-      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
-      overflow: hidden;
+      background: transparent;
+      border-radius: 0;
+      box-shadow: none;
+      overflow: visible;
     }
 
     .header {
-      padding: 30px 30px 20px 30px;
+      background: white;
+      padding: 32px 32px 24px 32px;
       text-align: left;
+      border-radius: 8px;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+      margin-bottom: 24px;
     }
 
     .title {
-      font-size: 24px;
+      font-size: 26px;
       font-weight: 600;
-      color: #333;
+      color: #2c3e50;
       margin: 0 0 8px 0;
+      line-height: 1.2;
     }
 
     .subtitle {
-      font-size: 16px;
-      color: #666;
+      font-size: 15px;
+      color: #64748b;
       margin: 0;
     }
 
     .highlight {
-      color: #ff4757;
+      color: #1e40af;
       font-weight: 600;
     }
 
     .content {
-      padding: 0 30px 30px 30px;
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
     }
 
     .table-selector {
-      margin-bottom: 25px;
+      background: white;
+      border-radius: 8px;
+      padding: 24px;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+      border: 1px solid #e2e8f0;
     }
 
     .selector-label {
-      font-size: 14px;
+      font-size: 15px;
       font-weight: 600;
-      color: #333;
-      margin-bottom: 8px;
-      padding: 8px 12px;
-      border: 2px solid #ff4757;
-      border-radius: 6px;
-      display: inline-block;
-      background: white;
+      color: #1e40af;
+      margin-bottom: 12px;
+      display: block;
     }
 
     .table-dropdown {
       width: 100%;
       padding: 12px 16px;
-      border: 1px solid #e1e5e9;
-      border-radius: 8px;
+      border: 2px solid #e2e8f0;
+      border-radius: 6px;
       font-size: 14px;
       background: white;
-      color: #333;
+      color: #2c3e50;
       cursor: pointer;
-      position: relative;
+      transition: all 0.2s ease;
+      font-family: inherit;
     }
 
     .table-dropdown:focus {
       outline: none;
-      border-color: #ff4757;
-      box-shadow: 0 0 0 3px rgba(255, 71, 87, 0.1);
+      border-color: #1e40af;
+      box-shadow: 0 0 0 3px rgba(30, 64, 175, 0.1);
+    }
+
+    .table-dropdown:hover {
+      border-color: #3b82f6;
     }
 
     .compare-section {
       text-align: center;
-      margin: 30px 0;
+      background: white;
+      padding: 32px 24px;
+      border-radius: 8px;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+      border: 1px solid #e2e8f0;
     }
 
     .compare-btn {
-      background: #4285f4;
+      background: linear-gradient(135deg, #1e40af 0%, #3b82f6 100%);
       color: white;
       border: none;
-      padding: 12px 24px;
-      border-radius: 8px;
-      font-size: 14px;
+      padding: 14px 32px;
+      border-radius: 6px;
+      font-size: 15px;
       font-weight: 600;
       cursor: pointer;
-      transition: all 0.2s;
+      transition: all 0.3s ease;
       position: relative;
       overflow: hidden;
+      box-shadow: 0 4px 12px rgba(30, 64, 175, 0.2);
     }
 
     .compare-btn:hover {
-      background: #3367d6;
-      transform: translateY(-1px);
-      box-shadow: 0 4px 12px rgba(66, 133, 244, 0.3);
+      transform: translateY(-2px);
+      box-shadow: 0 6px 20px rgba(30, 64, 175, 0.3);
     }
 
     .compare-btn:active {
@@ -117,48 +134,59 @@
     }
 
     .compare-text {
-      color: #ff4757;
-      font-size: 16px;
-      font-weight: 600;
-      margin-top: 12px;
+      color: #1e40af;
+      font-size: 15px;
+      font-weight: 500;
+      margin-top: 16px;
     }
 
     .query-section {
-      margin: 25px 0;
+      background: white;
+      padding: 24px;
+      border-radius: 8px;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+      border: 1px solid #e2e8f0;
     }
 
     .query-label {
-      color: #ff4757;
-      font-size: 16px;
+      color: #1e40af;
+      font-size: 15px;
       font-weight: 600;
-      margin-bottom: 15px;
+      margin-bottom: 12px;
+      display: block;
     }
 
     .action-buttons {
       display: flex;
       flex-direction: column;
-      gap: 12px;
-      margin-top: 30px;
+      gap: 16px;
+      background: white;
+      padding: 24px;
+      border-radius: 8px;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+      border: 1px solid #e2e8f0;
     }
 
     .action-btn {
       width: 100%;
-      padding: 16px;
-      border: 2px solid #ff4757;
-      border-radius: 8px;
+      padding: 16px 20px;
+      border: 2px solid #1e40af;
+      border-radius: 6px;
       background: white;
-      color: #ff4757;
-      font-size: 16px;
+      color: #1e40af;
+      font-size: 15px;
       font-weight: 600;
       cursor: pointer;
-      transition: all 0.2s;
+      transition: all 0.3s ease;
+      position: relative;
+      overflow: hidden;
     }
 
     .action-btn:hover:not(:disabled) {
-      background: #ff4757;
+      background: #1e40af;
       color: white;
       transform: translateY(-1px);
-      box-shadow: 0 4px 12px rgba(255, 71, 87, 0.2);
+      box-shadow: 0 4px 12px rgba(30, 64, 175, 0.2);
     }
 
     .action-btn:active {
@@ -166,19 +194,24 @@
     }
 
     .action-btn.primary {
-      background: #ff4757;
+      background: linear-gradient(135deg, #1e40af 0%, #3b82f6 100%);
       color: white;
+      border-color: #1e40af;
     }
 
     .action-btn.primary:hover:not(:disabled) {
-      background: #ff3742;
+      background: linear-gradient(135deg, #1e3a8a 0%, #2563eb 100%);
+      box-shadow: 0 6px 20px rgba(30, 64, 175, 0.3);
     }
 
     .action-btn:disabled {
-      opacity: 0.5;
+      opacity: 0.4;
       cursor: not-allowed;
       transform: none;
       box-shadow: none;
+      background: #f8fafc;
+      color: #94a3b8;
+      border-color: #e2e8f0;
     }
 
     .hidden {
@@ -187,35 +220,41 @@
 
     /* 数据预览表格 */
     .preview-section {
-      margin: 25px 0;
+      background: white;
+      padding: 24px;
+      border-radius: 8px;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+      border: 1px solid #e2e8f0;
     }
 
     .preview-table {
       width: 100%;
       border-collapse: collapse;
       background: white;
-      border-radius: 8px;
+      border-radius: 6px;
       overflow: hidden;
-      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+      border: 1px solid #e2e8f0;
     }
 
     .preview-table th,
     .preview-table td {
-      padding: 12px 16px;
+      padding: 16px 20px;
       text-align: left;
-      border-bottom: 1px solid #f0f0f0;
+      border-bottom: 1px solid #f1f5f9;
     }
 
     .preview-table th {
-      background: #f8f9fa;
+      background: #f8fafc;
       font-weight: 600;
-      color: #333;
-      font-size: 13px;
+      color: #1e40af;
+      font-size: 14px;
+      position: sticky;
+      top: 0;
     }
 
     .preview-table td {
       font-size: 14px;
-      color: #666;
+      color: #475569;
     }
 
     .preview-table tr:last-child td {
@@ -223,102 +262,180 @@
     }
 
     .preview-table tr:hover {
-      background: #f8f9fa;
+      background: #f8fafc;
     }
 
     .no-data {
       text-align: center;
-      padding: 40px;
-      color: #999;
+      padding: 48px 20px;
+      color: #94a3b8;
       font-style: italic;
     }
 
     .data-count {
-      color: #666;
+      color: #64748b;
       font-size: 14px;
-      margin-bottom: 12px;
+      margin-bottom: 16px;
+      font-weight: 500;
     }
 
     /* 操作日志 */
     .log-section {
-      margin-top: 30px;
+      background: white;
+      padding: 24px;
+      border-radius: 8px;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+      border: 1px solid #e2e8f0;
     }
 
     .log-title {
       font-size: 16px;
       font-weight: 600;
-      color: #333;
-      margin-bottom: 12px;
+      color: #1e40af;
+      margin-bottom: 16px;
+      display: block;
     }
 
     #log {
-      background: #f8f9fa;
-      border: 1px solid #e1e5e9;
-      border-radius: 8px;
-      padding: 16px;
+      background: #f8fafc;
+      border: 2px solid #e2e8f0;
+      border-radius: 6px;
+      padding: 20px;
       white-space: pre-wrap;
-      font-family: 'SF Mono', Monaco, monospace;
-      max-height: 200px;
+      font-family: 'SF Mono', 'Monaco', 'JetBrains Mono', 'Cascadia Code', monospace;
+      max-height: 220px;
       overflow-y: auto;
-      font-size: 12px;
-      line-height: 1.4;
-      color: #666;
+      font-size: 13px;
+      line-height: 1.5;
+      color: #475569;
+      box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.02);
     }
 
     /* 隐藏的授权区域 */
     .auth-section {
       position: fixed;
-      top: 10px;
-      right: 10px;
+      top: 16px;
+      right: 16px;
       background: white;
-      padding: 15px;
+      padding: 20px;
       border-radius: 8px;
-      box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
       z-index: 1000;
       max-width: 300px;
+      border: 1px solid #e2e8f0;
     }
 
     .auth-section input {
       width: 100%;
-      padding: 8px 12px;
-      margin-bottom: 10px;
-      border: 1px solid #ddd;
-      border-radius: 4px;
-      font-size: 12px;
+      padding: 12px 16px;
+      margin-bottom: 12px;
+      border: 2px solid #e2e8f0;
+      border-radius: 6px;
+      font-size: 13px;
+      font-family: inherit;
+      transition: all 0.2s ease;
+    }
+
+    .auth-section input:focus {
+      outline: none;
+      border-color: #1e40af;
+      box-shadow: 0 0 0 3px rgba(30, 64, 175, 0.1);
     }
 
     .auth-section button {
       width: 100%;
-      padding: 8px;
-      background: #4285f4;
+      padding: 12px 16px;
+      background: linear-gradient(135deg, #1e40af 0%, #3b82f6 100%);
       color: white;
       border: none;
-      border-radius: 4px;
-      font-size: 12px;
+      border-radius: 6px;
+      font-size: 13px;
+      font-weight: 600;
       cursor: pointer;
+      transition: all 0.2s ease;
+    }
+
+    .auth-section button:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 4px 12px rgba(30, 64, 175, 0.3);
     }
 
     .auth-toggle {
       position: fixed;
-      top: 10px;
-      right: 10px;
-      background: #4285f4;
+      top: 16px;
+      right: 16px;
+      background: linear-gradient(135deg, #1e40af 0%, #3b82f6 100%);
       color: white;
       border: none;
-      padding: 8px 12px;
-      border-radius: 4px;
-      font-size: 12px;
+      padding: 12px 20px;
+      border-radius: 6px;
+      font-size: 13px;
+      font-weight: 600;
       cursor: pointer;
       z-index: 1001;
+      box-shadow: 0 4px 12px rgba(30, 64, 175, 0.2);
+      transition: all 0.2s ease;
+    }
+
+    .auth-toggle:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 6px 20px rgba(30, 64, 175, 0.3);
     }
 
     .row-checkbox {
       width: auto;
       margin-right: 8px;
+      transform: scale(1.1);
+      accent-color: #1e40af;
     }
 
     .selected-row {
-      background: #e6f7ff !important;
+      background: #eff6ff !important;
+      border-left: 3px solid #1e40af;
+    }
+
+    /* 滚动条美化 */
+    ::-webkit-scrollbar {
+      width: 6px;
+      height: 6px;
+    }
+
+    ::-webkit-scrollbar-track {
+      background: #f1f5f9;
+      border-radius: 3px;
+    }
+
+    ::-webkit-scrollbar-thumb {
+      background: #cbd5e1;
+      border-radius: 3px;
+    }
+
+    ::-webkit-scrollbar-thumb:hover {
+      background: #94a3b8;
+    }
+
+    /* 响应式设计 */
+    @media (max-width: 768px) {
+      body {
+        padding: 16px;
+      }
+      
+      .container {
+        max-width: 100%;
+      }
+      
+      .header {
+        padding: 24px 20px 20px 20px;
+      }
+      
+      .table-selector,
+      .compare-section,
+      .query-section,
+      .action-buttons,
+      .preview-section,
+      .log-section {
+        padding: 20px 16px;
+      }
     }
   </style>
 </head>
