@@ -161,6 +161,14 @@ async function previewFilter(req, res) {
 
   try {
     const records = await getAllRecords(client, sourceTableId);
+    
+    // 调试：检查字段匹配情况
+    if (records.length > 0 && filters.length > 0) {
+      const firstRecord = records[0];
+      const filterField = filters[0].field;
+      console.log(`筛选字段 ${filterField} 是否存在:`, filterField in firstRecord.fields);
+    }
+    
     const matchedRecords = records.filter(record => applyFilters(record, filters));
     
     res.json({
@@ -287,7 +295,13 @@ function applyFilters(record, filters) {
 function applyFilter(record, filter) {
   const fieldValue = record.fields[filter.field];
   
-  if (fieldValue === undefined || fieldValue === null || fieldValue === '') {
+  // 简化调试：只在字段值为undefined时输出
+  if (fieldValue === undefined) {
+    console.log(`⚠️ 字段 ${filter.field} 在记录中不存在，可用字段:`, Object.keys(record.fields).slice(0, 5));
+    return filter.operator === 'isEmpty';
+  }
+  
+  if (fieldValue === null || fieldValue === '') {
     return filter.operator === 'isEmpty';
   }
   

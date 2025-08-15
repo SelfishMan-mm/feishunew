@@ -778,6 +778,13 @@
         // 如果有查询条件，使用后端筛选逻辑
         let filteredData = sourceTableData;
         if (queryFieldId && queryValue && ['equals', 'contains', 'startsWith', 'endsWith'].includes(queryOperator)) {
+          console.log('前端筛选参数:', {
+            queryFieldId,
+            queryOperator,
+            queryValue,
+            sourceTableId
+          });
+
           const filterResponse = await fetch('/api/data-operations', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
