@@ -15,6 +15,12 @@
     },
     "testAuth": {
       "entry": "faas/testAuth.js"
+    },
+    "analyzeDiff": {
+      "entry": "faas/analyzeDiff.js"
+    },
+    "executeDiffCopy": {
+      "entry": "faas/executeDiffCopy.js"
     }
   }
 }

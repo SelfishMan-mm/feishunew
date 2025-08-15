@@ -105,10 +105,11 @@ async function testAuth() {
   }
 }
 
-// 开始复制
-async function startCopy() {
+// 执行操作（预览或直接复制）
+async function executeOperation() {
   const sourceTable = document.getElementById('sourceTable').value.trim();
   const targetTable = document.getElementById('targetTable').value.trim();
+  const selectedMode = document.querySelector('input[name="operationMode"]:checked').value;
 
   if (!sourceTable || !targetTable) {
     log('❗ 请填写源表格和目标表格ID');
@@ -120,15 +121,67 @@ async function startCopy() {
     return;
   }
 
-  log('🚀 开始复制数据...');
+  if (selectedMode === 'preview') {
+    await previewDifferences();
+  } else {
+    await directCopy();
+  }
+}
+
+// 预览差异
+async function previewDifferences() {
+  const sourceTable = document.getElementById('sourceTable').value.trim();
+  const targetTable = document.getElementById('targetTable').value.trim();
+  const primaryKey = document.getElementById('primaryKeyField').value;
+
+  log('🔍 开始分析差异...');
   
-  // 禁用复制按钮
-  const copyBtn = document.getElementById('copyBtn');
-  copyBtn.disabled = true;
-  copyBtn.textContent = '复制中...';
+  const operationBtn = document.getElementById('operationBtn');
+  operationBtn.disabled = true;
+  operationBtn.textContent = '分析中...';
 
   try {
-    // 调用FaaS函数执行复制
+    // 调用差异分析FaaS函数
+    const response = await fetch('/faas/analyzeDiff', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ 
+        baseId: currentBaseId,
+        personalToken: currentToken,
+        sourceTableId: sourceTable, 
+        targetTableId: targetTable,
+        primaryKeyField: primaryKey
+      })
+    });
+
+    const data = await response.json();
+    
+    if (data.success) {
+      displayDiffResults(data.results);
+      log(`✅ 差异分析完成！新增: ${data.results.new.length}, 删除: ${data.results.deleted.length}, 修改: ${data.results.modified.length}, 相同: ${data.results.same.length}`);
+    } else {
+      log(`❌ 差异分析失败: ${data.error}`);
+    }
+  } catch (error) {
+    log(`❌ 网络错误: ${error.message}`);
+  } finally {
+    operationBtn.disabled = false;
+    operationBtn.textContent = '🔍 开始分析';
+  }
+}
+
+// 直接复制
+async function directCopy() {
+  const sourceTable = document.getElementById('sourceTable').value.trim();
+  const targetTable = document.getElementById('targetTable').value.trim();
+
+  log('🚀 开始直接复制...');
+  
+  const operationBtn = document.getElementById('operationBtn');
+  operationBtn.disabled = true;
+  operationBtn.textContent = '复制中...';
+
+  try {
     const response = await fetch('/faas/copyRecords', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -150,22 +203,168 @@ async function startCopy() {
   } catch (error) {
     log(`❌ 网络错误: ${error.message}`);
   } finally {
-    // 恢复复制按钮
-    copyBtn.disabled = false;
-    copyBtn.textContent = '🚀 开始复制';
+    operationBtn.disabled = false;
+    operationBtn.textContent = '🚀 开始复制';
   }
+}
+
+// 显示差异结果
+function displayDiffResults(results) {
+  const diffResultSection = document.getElementById('diffResultSection');
+  const diffSummary = document.getElementById('diffSummary');
+  
+  // 显示结果区域
+  diffResultSection.classList.remove('hidden');
+  
+  // 生成汇总信息
+  diffSummary.innerHTML = `
+    <div class="diff-summary">
+      <div class="diff-item diff-new">
+        <div style="font-weight: bold;">${results.new.length}</div>
+        <div>新增记录</div>
+      </div>
+      <div class="diff-item diff-deleted">
+        <div style="font-weight: bold;">${results.deleted.length}</div>
+        <div>删除记录</div>
+      </div>
+      <div class="diff-item diff-modified">
+        <div style="font-weight: bold;">${results.modified.length}</div>
+        <div>修改记录</div>
+      </div>
+      <div class="diff-item diff-same">
+        <div style="font-weight: bold;">${results.same.length}</div>
+        <div>相同记录</div>
+      </div>
+    </div>
+    <div style="font-size: 12px; color: #666; margin-top: 8px;">
+      💡 新增和修改的记录将被复制到目标表格
+    </div>
+  `;
+  
+  // 存储结果供后续使用
+  window.diffResults = results;
+}
+
+// 执行复制（基于差异结果）
+async function executeCopy() {
+  if (!window.diffResults) {
+    log('❌ 没有差异分析结果');
+    return;
+  }
+
+  const results = window.diffResults;
+  const totalOperations = results.new.length + results.modified.length;
+  
+  if (totalOperations === 0) {
+    log('ℹ️ 没有需要复制的记录');
+    return;
+  }
+
+  if (!confirm(`确定要执行复制操作吗？\n将处理 ${totalOperations} 条记录（${results.new.length} 新增，${results.modified.length} 修改）`)) {
+    return;
+  }
+
+  log(`🚀 开始执行复制操作，共 ${totalOperations} 条记录...`);
+  
+  const executeCopyBtn = document.getElementById('executeCopyBtn');
+  executeCopyBtn.disabled = true;
+  executeCopyBtn.textContent = '执行中...';
+
+  try {
+    const response = await fetch('/faas/executeDiffCopy', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ 
+        baseId: currentBaseId,
+        personalToken: currentToken,
+        sourceTableId: document.getElementById('sourceTable').value.trim(),
+        targetTableId: document.getElementById('targetTable').value.trim(),
+        diffResults: results
+      })
+    });
+
+    const data = await response.json();
+    
+    if (data.success) {
+      log(`✅ 复制执行完成！成功: ${data.successCount}, 失败: ${data.errorCount}`);
+      if (data.errors && data.errors.length > 0) {
+        log(`⚠️ 部分错误: ${data.errors.slice(0, 3).join(', ')}`);
+      }
+    } else {
+      log(`❌ 复制执行失败: ${data.error}`);
+    }
+  } catch (error) {
+    log(`❌ 网络错误: ${error.message}`);
+  } finally {
+    executeCopyBtn.disabled = false;
+    executeCopyBtn.textContent = '✅ 确认执行复制';
+  }
+}
+
+// 导出结果
+function exportResults() {
+  if (!window.diffResults) {
+    log('❌ 没有可导出的结果');
+    return;
+  }
+
+  const results = window.diffResults;
+  const exportData = {
+    timestamp: new Date().toISOString(),
+    summary: {
+      new: results.new.length,
+      deleted: results.deleted.length,
+      modified: results.modified.length,
+      same: results.same.length
+    },
+    details: results
+  };
+
+  // 创建下载链接
+  const blob = new Blob([JSON.stringify(exportData, null, 2)], { type: 'application/json' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `diff-results-${new Date().toISOString().slice(0, 19).replace(/:/g, '-')}.json`;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+
+  log('📄 差异结果已导出为JSON文件');
 }
 
 // 更新UI状态
 function updateUIState() {
-  const copyBtn = document.getElementById('copyBtn');
+  const operationBtn = document.getElementById('operationBtn');
   
   if (isAuthorized) {
-    copyBtn.disabled = false;
+    operationBtn.disabled = false;
+    // 更新操作按钮文本
+    updateOperationButtonText();
   } else {
-    copyBtn.disabled = true;
+    operationBtn.disabled = true;
   }
 }
+
+// 更新操作按钮文本
+function updateOperationButtonText() {
+  const operationBtn = document.getElementById('operationBtn');
+  const selectedMode = document.querySelector('input[name="operationMode"]:checked').value;
+  
+  if (selectedMode === 'preview') {
+    operationBtn.textContent = '🔍 开始分析';
+  } else {
+    operationBtn.textContent = '🚀 开始复制';
+  }
+}
+
+// 监听操作模式变化
+document.addEventListener('DOMContentLoaded', () => {
+  document.querySelectorAll('input[name="operationMode"]').forEach(radio => {
+    radio.addEventListener('change', updateOperationButtonText);
+  });
+});
 
 // 显示状态信息
 function showStatus(elementId, message, type) {
