@@ -3,7 +3,7 @@ const { BaseClient } = require('@lark-base-open/node-sdk');
 module.exports = async function handler(req, res) {
   if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
 
-  const { sourceTableId, targetTableId, baseId, personalToken } = req.body;
+  const { sourceTableId, targetTableId, baseId, personalToken, customFieldMapping } = req.body;
   
   if (!sourceTableId || !targetTableId) {
     return res.status(400).json({ error: '缺少表ID' });
@@ -21,30 +21,38 @@ module.exports = async function handler(req, res) {
   try {
     console.log('开始获取字段信息...', { sourceTableId, targetTableId, baseId });
     
-    // 1. 字段 & 记录（分页）
-    const [sf, tf] = await Promise.all([
-      client.base.appTableField.list({ path: { table_id: sourceTableId } }),
-      client.base.appTableField.list({ path: { table_id: targetTableId } })
-    ]);
-    
-    console.log('字段API响应:', { sf: sf?.data, tf: tf?.data });
-    
-    // 检查返回数据结构
-    if (!sf?.data?.items) {
-      throw new Error(`源表格字段获取失败，响应结构异常: ${JSON.stringify(sf)}`);
-    }
-    if (!tf?.data?.items) {
-      throw new Error(`目标表格字段获取失败，响应结构异常: ${JSON.stringify(tf)}`);
-    }
-    
-    const sFields = sf.data.items;
-    const tFields = tf.data.items;
-    
-    console.log('字段信息:', { sourceFields: sFields.length, targetFields: tFields.length });
+    let fieldMap = {};
 
-    const map = new Map(tFields.map(f => [f.field_name, f.field_id]));
-    const fieldMap = {};
-    sFields.forEach(f => { const id = map.get(f.field_name); if (id) fieldMap[f.field_id] = id; });
+    // 使用自定义字段映射或自动映射
+    if (customFieldMapping && Object.keys(customFieldMapping).length > 0) {
+      fieldMap = customFieldMapping;
+      console.log('使用自定义字段映射:', fieldMap);
+    } else {
+      // 1. 字段 & 记录（分页）
+      const [sf, tf] = await Promise.all([
+        client.base.appTableField.list({ path: { table_id: sourceTableId } }),
+        client.base.appTableField.list({ path: { table_id: targetTableId } })
+      ]);
+      
+      console.log('字段API响应:', { sf: sf?.data, tf: tf?.data });
+      
+      // 检查返回数据结构
+      if (!sf?.data?.items) {
+        throw new Error(`源表格字段获取失败，响应结构异常: ${JSON.stringify(sf)}`);
+      }
+      if (!tf?.data?.items) {
+        throw new Error(`目标表格字段获取失败，响应结构异常: ${JSON.stringify(tf)}`);
+      }
+      
+      const sFields = sf.data.items;
+      const tFields = tf.data.items;
+      
+      console.log('字段信息:', { sourceFields: sFields.length, targetFields: tFields.length });
+
+      const map = new Map(tFields.map(f => [f.field_name, f.field_id]));
+      sFields.forEach(f => { const id = map.get(f.field_name); if (id) fieldMap[f.field_id] = id; });
+      console.log('使用自动字段映射:', fieldMap);
+    }
 
     let pageToken;
     const records = [];

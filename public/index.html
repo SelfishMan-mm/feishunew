@@ -419,15 +419,15 @@
       body {
         padding: 16px;
       }
-      
+
       .container {
         max-width: 100%;
       }
-      
+
       .header {
         padding: 24px 20px 20px 20px;
       }
-      
+
       .table-selector,
       .compare-section,
       .query-section,
@@ -481,9 +481,27 @@
         <div class="compare-text">选择查询字段</div>
       </div>
 
+      <!-- 查询字段选择 -->
+      <div class="table-selector">
+        <div class="selector-label">选择查询字段</div>
+        <select class="table-dropdown" id="queryFieldSelect">
+          <option value="">请先选择源表格</option>
+        </select>
+      </div>
+
       <div class="query-section">
         <div class="query-label">填写查询值</div>
-        <input type="text" class="table-dropdown" id="queryValue" placeholder="请输入要查询的值（可选）" />
+        <div style="display: flex; gap: 10px;">
+          <select class="table-dropdown" id="queryOperator" style="flex: 0 0 120px;">
+            <option value="contains">包含</option>
+            <option value="equals">等于</option>
+            <option value="startsWith">开头是</option>
+            <option value="endsWith">结尾是</option>
+            <option value="notEmpty">不为空</option>
+            <option value="isEmpty">为空</option>
+          </select>
+          <input type="text" class="table-dropdown" id="queryValue" placeholder="请输入要查询的值" style="flex: 1;" />
+        </div>
       </div>
 
       <!-- 数据预览区域 -->
@@ -505,8 +523,24 @@
         </table>
       </div>
 
+      <!-- 字段映射配置 -->
+      <div class="preview-section" id="fieldMappingSection" style="display: none;">
+        <div class="data-count">字段映射配置</div>
+        <table class="preview-table" id="fieldMappingTable">
+          <thead>
+            <tr>
+              <th>源字段</th>
+              <th>目标字段</th>
+            </tr>
+          </thead>
+          <tbody id="fieldMappingBody">
+          </tbody>
+        </table>
+      </div>
+
       <!-- 操作按钮 -->
       <div class="action-buttons">
+        <button class="action-btn" onclick="showFieldMapping()" id="configMappingBtn" disabled>配置字段映射</button>
         <button class="action-btn" onclick="copySelectedRows()" id="copyRowsBtn" disabled>整行复制</button>
         <button class="action-btn primary" onclick="copyEntireTable()" id="copyTableBtn" disabled>整表复制</button>
       </div>
@@ -525,7 +559,9 @@
     let isAuthorized = false;
     let sourceTableData = [];
     let selectedRows = new Set();
-    let primaryFieldId = null;
+    let sourceFields = [];
+    let targetFields = [];
+    let customFieldMapping = {};
 
     // 页面加载时初始化
     window.addEventListener('load', () => {
@@ -536,7 +572,7 @@
     function toggleAuth() {
       const authSection = document.getElementById('authSection');
       const authToggle = document.getElementById('authToggle');
-      
+
       if (authSection.classList.contains('hidden')) {
         authSection.classList.remove('hidden');
         authToggle.textContent = '隐藏授权';
@@ -588,10 +624,10 @@
           currentToken = token;
           currentBaseId = baseId;
           isAuthorized = true;
-          
+
           document.getElementById('authStatus').textContent = '授权成功';
           document.getElementById('authStatus').style.color = '#52c41a';
-          
+
           await loadTables();
           log(`✅ 授权成功！可访问 ${data.tableCount} 个表格`);
         } else {
@@ -620,22 +656,22 @@
         if (data.success) {
           const sourceSelect = document.getElementById('sourceTable');
           const targetSelect = document.getElementById('targetTable');
-          
+
           sourceSelect.innerHTML = '<option value="">请选择源数据表</option>';
           targetSelect.innerHTML = '<option value="">请选择目标数据表</option>';
-          
+
           data.tables.forEach(table => {
             const sourceOption = document.createElement('option');
             sourceOption.value = table.table_id;
             sourceOption.textContent = table.name;
             sourceSelect.appendChild(sourceOption);
-            
+
             const targetOption = document.createElement('option');
             targetOption.value = table.table_id;
             targetOption.textContent = table.name;
             targetSelect.appendChild(targetOption);
           });
-          
+
           log(`✅ 已加载 ${data.tables.length} 个表格`);
         }
       } catch (error) {
@@ -646,20 +682,64 @@
     // 源表格变化时的处理
     async function onSourceTableChange() {
       const sourceTableId = document.getElementById('sourceTable').value;
-      if (!sourceTableId) return;
+      if (!sourceTableId) {
+        document.getElementById('queryFieldSelect').innerHTML = '<option value="">请先选择源表格</option>';
+        return;
+      }
 
       // 重置预览数据
       document.getElementById('previewSection').style.display = 'none';
+      document.getElementById('fieldMappingSection').style.display = 'none';
       selectedRows.clear();
+      customFieldMapping = {};
       updateButtonStates();
-      
+
+      // 加载源表格字段到查询字段选择器
+      await loadQueryFields(sourceTableId);
+
       log(`📋 已选择源表格: ${sourceTableId}`);
+    }
+
+    // 加载查询字段选项
+    async function loadQueryFields(tableId) {
+      try {
+        const response = await fetch('/api/fields', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            baseId: currentBaseId,
+            personalToken: currentToken,
+            tableId: tableId
+          })
+        });
+
+        const data = await response.json();
+        if (data.success) {
+          sourceFields = data.fields;
+          const queryFieldSelect = document.getElementById('queryFieldSelect');
+          queryFieldSelect.innerHTML = '<option value="">选择查询字段</option>';
+
+          data.fields.forEach(field => {
+            const option = document.createElement('option');
+            option.value = field.field_id;
+            option.textContent = `${field.field_name} (${field.type})`;
+            queryFieldSelect.appendChild(option);
+          });
+
+          log(`✅ 已加载 ${data.fields.length} 个查询字段选项`);
+        }
+      } catch (error) {
+        log(`❌ 加载查询字段失败: ${error.message}`);
+      }
     }
 
     // 加载预览数据
     async function loadPreviewData() {
       const sourceTableId = document.getElementById('sourceTable').value;
       const targetTableId = document.getElementById('targetTable').value;
+      const queryFieldId = document.getElementById('queryFieldSelect').value;
+      const queryOperator = document.getElementById('queryOperator').value;
+      const queryValue = document.getElementById('queryValue').value.trim();
 
       if (!sourceTableId) {
         return log('❗ 请先选择源数据表');
@@ -676,33 +756,13 @@
       log('🔍 正在加载数据预览...');
 
       try {
-        // 获取源表格字段信息
-        const fieldsResponse = await fetch('/api/fields', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ 
-            baseId: currentBaseId, 
-            personalToken: currentToken,
-            tableId: sourceTableId
-          })
-        });
-
-        const fieldsData = await fieldsResponse.json();
-        if (!fieldsData.success) {
-          throw new Error('获取字段信息失败');
-        }
-
-        // 选择主字段（第一个字段）
-        primaryFieldId = fieldsData.fields[0]?.field_id;
-        const primaryFieldName = fieldsData.fields[0]?.field_name || '主字段';
-
         // 获取表格数据
         const dataResponse = await fetch('/api/data-operations', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ 
+          body: JSON.stringify({
             operation: 'get-table-data',
-            baseId: currentBaseId, 
+            baseId: currentBaseId,
             personalToken: currentToken,
             tableId: sourceTableId
           })
@@ -714,8 +774,49 @@
         }
 
         sourceTableData = tableData.records;
-        displayPreviewData(sourceTableData, primaryFieldName);
-        
+
+        // 如果有查询条件，使用后端筛选逻辑
+        let filteredData = sourceTableData;
+        if (queryFieldId && queryValue && ['equals', 'contains', 'startsWith', 'endsWith'].includes(queryOperator)) {
+          const filterResponse = await fetch('/api/data-operations', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              operation: 'preview-filter',
+              sourceTableId: sourceTableId,
+              baseId: currentBaseId,
+              personalToken: currentToken,
+              filters: [{
+                field: queryFieldId,
+                operator: queryOperator,
+                value: queryValue
+              }]
+            })
+          });
+
+          const filterResult = await filterResponse.json();
+          if (filterResult.success) {
+            // 重新获取筛选后的数据
+            filteredData = sourceTableData.filter(record => {
+              const fieldValue = record.fields[queryFieldId];
+              return applyFilterLogic(fieldValue, queryOperator, queryValue);
+            });
+            log(`🔍 筛选结果：${filteredData.length} / ${sourceTableData.length} 条记录`);
+          }
+        } else if (queryFieldId && ['notEmpty', 'isEmpty'].includes(queryOperator)) {
+          filteredData = sourceTableData.filter(record => {
+            const fieldValue = record.fields[queryFieldId];
+            return applyFilterLogic(fieldValue, queryOperator, '');
+          });
+          log(`🔍 筛选结果：${filteredData.length} / ${sourceTableData.length} 条记录`);
+        }
+
+        const queryFieldName = queryFieldId ?
+          sourceFields.find(f => f.field_id === queryFieldId)?.field_name || '查询字段' :
+          sourceFields[0]?.field_name || '主字段';
+
+        displayPreviewData(filteredData, queryFieldName, queryFieldId);
+
         log(`✅ 已加载 ${sourceTableData.length} 条记录`);
 
       } catch (error) {
@@ -723,40 +824,61 @@
       }
     }
 
-    // 显示预览数据
-    function displayPreviewData(records, primaryFieldName) {
-      const queryValue = document.getElementById('queryValue').value.trim().toLowerCase();
-      
-      // 筛选数据
-      let filteredRecords = records;
-      if (queryValue && primaryFieldId) {
-        filteredRecords = records.filter(record => {
-          const fieldValue = record.fields[primaryFieldId];
-          return fieldValue && String(fieldValue).toLowerCase().includes(queryValue);
-        });
+    // 前端筛选逻辑（与后端保持一致）
+    function applyFilterLogic(fieldValue, operator, queryValue) {
+      if (fieldValue === undefined || fieldValue === null || fieldValue === '') {
+        return operator === 'isEmpty';
       }
 
+      if (operator === 'notEmpty') {
+        return true;
+      }
+
+      if (operator === 'isEmpty') {
+        return false;
+      }
+
+      const valueStr = String(fieldValue).toLowerCase();
+      const queryStr = String(queryValue).toLowerCase();
+
+      switch (operator) {
+        case 'equals':
+          return valueStr === queryStr;
+        case 'contains':
+          return valueStr.includes(queryStr);
+        case 'startsWith':
+          return valueStr.startsWith(queryStr);
+        case 'endsWith':
+          return valueStr.endsWith(queryStr);
+        default:
+          return false;
+      }
+    }
+
+    // 显示预览数据
+    function displayPreviewData(records, fieldName, fieldId) {
       const previewSection = document.getElementById('previewSection');
       const dataCount = document.getElementById('dataCount');
       const primaryFieldHeader = document.getElementById('primaryFieldHeader');
       const tableBody = document.getElementById('previewTableBody');
 
       previewSection.style.display = 'block';
-      primaryFieldHeader.textContent = primaryFieldName;
-      dataCount.textContent = `已选：${filteredRecords.length} 条数据`;
+      primaryFieldHeader.textContent = fieldName;
+      dataCount.textContent = `已选：${records.length} 条数据`;
 
-      if (filteredRecords.length === 0) {
+      if (records.length === 0) {
         tableBody.innerHTML = '<tr><td colspan="3" class="no-data">没有找到匹配的数据</td></tr>';
+        updateButtonStates();
         return;
       }
 
-      tableBody.innerHTML = filteredRecords.map((record, index) => {
-        const primaryValue = record.fields[primaryFieldId] || '无数据';
+      tableBody.innerHTML = records.map((record, index) => {
+        const fieldValue = fieldId ? (record.fields[fieldId] || '无数据') : (record.fields[sourceFields[0]?.field_id] || '无数据');
         return `
           <tr>
             <td><input type="checkbox" class="row-checkbox" data-record-id="${record.record_id}" onchange="toggleRowSelection(this)"></td>
             <td>${index + 1}</td>
-            <td>${primaryValue}</td>
+            <td>${fieldValue}</td>
           </tr>
         `;
       }).join('');
@@ -768,7 +890,7 @@
     function toggleRowSelection(checkbox) {
       const recordId = checkbox.dataset.recordId;
       const row = checkbox.closest('tr');
-      
+
       if (checkbox.checked) {
         selectedRows.add(recordId);
         row.classList.add('selected-row');
@@ -776,19 +898,113 @@
         selectedRows.delete(recordId);
         row.classList.remove('selected-row');
       }
-      
+
       updateButtonStates();
+    }
+
+    // 显示字段映射配置
+    async function showFieldMapping() {
+      const sourceTableId = document.getElementById('sourceTable').value;
+      const targetTableId = document.getElementById('targetTable').value;
+
+      if (!sourceTableId || !targetTableId) {
+        return log('❗ 请先选择源表格和目标表格');
+      }
+
+      try {
+        // 获取目标表格字段
+        const targetResponse = await fetch('/api/fields', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            baseId: currentBaseId,
+            personalToken: currentToken,
+            tableId: targetTableId
+          })
+        });
+
+        const targetData = await targetResponse.json();
+        if (!targetData.success) {
+          throw new Error('获取目标表格字段失败');
+        }
+
+        targetFields = targetData.fields;
+        displayFieldMappingTable();
+
+        log(`✅ 字段映射配置已加载`);
+
+      } catch (error) {
+        log(`❌ 加载字段映射失败: ${error.message}`);
+      }
+    }
+
+    // 显示字段映射表格
+    function displayFieldMappingTable() {
+      const fieldMappingSection = document.getElementById('fieldMappingSection');
+      const fieldMappingBody = document.getElementById('fieldMappingBody');
+
+      fieldMappingSection.style.display = 'block';
+
+      // 自动建立初始映射
+      const autoMapping = {};
+      const targetFieldMap = new Map(targetFields.map(f => [f.field_name.toLowerCase(), f]));
+
+      sourceFields.forEach(sourceField => {
+        const matchedTarget = targetFieldMap.get(sourceField.field_name.toLowerCase());
+        if (matchedTarget) {
+          autoMapping[sourceField.field_id] = matchedTarget.field_id;
+        }
+      });
+
+      customFieldMapping = { ...autoMapping };
+
+      fieldMappingBody.innerHTML = sourceFields.map(sourceField => {
+        const mappedTargetId = customFieldMapping[sourceField.field_id] || '';
+
+        return `
+          <tr>
+            <td>${sourceField.field_name} (${sourceField.type})</td>
+            <td>
+              <select class="table-dropdown" data-source-field="${sourceField.field_id}" onchange="updateFieldMapping(this)">
+                <option value="">-- 不映射 --</option>
+                ${targetFields.map(tf =>
+          `<option value="${tf.field_id}" ${tf.field_id === mappedTargetId ? 'selected' : ''}>${tf.field_name} (${tf.type})</option>`
+        ).join('')}
+              </select>
+            </td>
+          </tr>
+        `;
+      }).join('');
+
+      log(`✅ 自动映射了 ${Object.keys(autoMapping).length} 个字段`);
+    }
+
+    // 更新字段映射
+    function updateFieldMapping(selectElement) {
+      const sourceFieldId = selectElement.dataset.sourceField;
+      const targetFieldId = selectElement.value;
+
+      if (targetFieldId) {
+        customFieldMapping[sourceFieldId] = targetFieldId;
+      } else {
+        delete customFieldMapping[sourceFieldId];
+      }
+
+      log(`🔄 字段映射已更新，当前映射 ${Object.keys(customFieldMapping).length} 个字段`);
     }
 
     // 更新按钮状态
     function updateButtonStates() {
+      const configMappingBtn = document.getElementById('configMappingBtn');
       const copyRowsBtn = document.getElementById('copyRowsBtn');
       const copyTableBtn = document.getElementById('copyTableBtn');
-      
+
       const hasSourceData = sourceTableData.length > 0;
       const hasSelectedRows = selectedRows.size > 0;
       const hasTargetTable = document.getElementById('targetTable').value;
-      
+      const hasSourceTable = document.getElementById('sourceTable').value;
+
+      configMappingBtn.disabled = !hasSourceTable || !hasTargetTable;
       copyRowsBtn.disabled = !hasSelectedRows || !hasTargetTable;
       copyTableBtn.disabled = !hasSourceData || !hasTargetTable;
     }
@@ -805,7 +1021,7 @@
       }
 
       const selectedRecords = sourceTableData.filter(record => selectedRows.has(record.record_id));
-      
+
       if (!confirm(`确定要复制选中的 ${selectedRecords.length} 条记录吗？`)) {
         return;
       }
@@ -822,7 +1038,8 @@
             targetTableId: targetTableId,
             baseId: currentBaseId,
             personalToken: currentToken,
-            records: selectedRecords
+            records: selectedRecords,
+            customFieldMapping: Object.keys(customFieldMapping).length > 0 ? customFieldMapping : null
           })
         });
 
@@ -863,7 +1080,8 @@
             sourceTableId: sourceTableId,
             targetTableId: targetTableId,
             baseId: currentBaseId,
-            personalToken: currentToken
+            personalToken: currentToken,
+            customFieldMapping: Object.keys(customFieldMapping).length > 0 ? customFieldMapping : null
           })
         });
 

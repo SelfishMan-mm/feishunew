@@ -68,7 +68,7 @@ async function getTableData(req, res) {
 
 // 复制选中记录
 async function copyRecords(req, res) {
-  const { sourceTableId, targetTableId, baseId, personalToken, records } = req.body;
+  const { sourceTableId, targetTableId, baseId, personalToken, records, customFieldMapping } = req.body;
   
   if (!sourceTableId || !targetTableId || !baseId || !personalToken || !records) {
     return res.status(400).json({ error: '缺少必要参数' });
@@ -80,21 +80,29 @@ async function copyRecords(req, res) {
   });
 
   try {
-    // 获取字段映射
-    const [sourceFields, targetFields] = await Promise.all([
-      client.base.appTableField.list({ path: { table_id: sourceTableId } }),
-      client.base.appTableField.list({ path: { table_id: targetTableId } })
-    ]);
+    let fieldMapping = {};
 
-    const targetFieldMap = new Map(targetFields.data.items.map(f => [f.field_name, f.field_id]));
-    const fieldMapping = {};
-    
-    sourceFields.data.items.forEach(sourceField => {
-      const targetFieldId = targetFieldMap.get(sourceField.field_name);
-      if (targetFieldId) {
-        fieldMapping[sourceField.field_id] = targetFieldId;
-      }
-    });
+    // 使用自定义字段映射或自动映射
+    if (customFieldMapping && Object.keys(customFieldMapping).length > 0) {
+      fieldMapping = customFieldMapping;
+      console.log('使用自定义字段映射:', fieldMapping);
+    } else {
+      // 获取字段映射
+      const [sourceFields, targetFields] = await Promise.all([
+        client.base.appTableField.list({ path: { table_id: sourceTableId } }),
+        client.base.appTableField.list({ path: { table_id: targetTableId } })
+      ]);
+
+      const targetFieldMap = new Map(targetFields.data.items.map(f => [f.field_name, f.field_id]));
+      
+      sourceFields.data.items.forEach(sourceField => {
+        const targetFieldId = targetFieldMap.get(sourceField.field_name);
+        if (targetFieldId) {
+          fieldMapping[sourceField.field_id] = targetFieldId;
+        }
+      });
+      console.log('使用自动字段映射:', fieldMapping);
+    }
 
     // 复制记录
     let successCount = 0;
