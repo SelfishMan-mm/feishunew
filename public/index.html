@@ -3,489 +3,401 @@
 
 <head>
   <meta charset="utf-8">
-  <title>飞书多维表格数据复制工具</title>
+  <title>飞书多维表格跨表复制</title>
   <style>
     * {
       box-sizing: border-box;
     }
 
     body {
-      font-family: 'Segoe UI', Arial, sans-serif;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Arial, sans-serif;
       margin: 0;
       padding: 20px;
-      background: #f5f5f5;
+      background: #f8f9fa;
+      color: #333;
     }
 
     .container {
-      max-width: 800px;
+      max-width: 600px;
       margin: 0 auto;
       background: white;
-      border-radius: 8px;
-      box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+      border-radius: 12px;
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+      overflow: hidden;
     }
 
     .header {
-      background: #4285f4;
-      color: white;
-      padding: 20px;
-      border-radius: 8px 8px 0 0;
+      padding: 30px 30px 20px 30px;
+      text-align: left;
+    }
+
+    .title {
+      font-size: 24px;
+      font-weight: 600;
+      color: #333;
+      margin: 0 0 8px 0;
+    }
+
+    .subtitle {
+      font-size: 16px;
+      color: #666;
+      margin: 0;
+    }
+
+    .highlight {
+      color: #ff4757;
+      font-weight: 600;
     }
 
     .content {
-      padding: 20px;
+      padding: 0 30px 30px 30px;
     }
 
-    .section {
-      margin-bottom: 30px;
+    .table-selector {
+      margin-bottom: 25px;
     }
 
-    .section h3 {
-      color: #333;
-      border-bottom: 2px solid #4285f4;
-      padding-bottom: 5px;
-    }
-
-    .form-group {
-      margin-bottom: 15px;
-    }
-
-    .form-group label {
-      display: block;
-      margin-bottom: 5px;
-      font-weight: bold;
-      color: #555;
-    }
-
-    .form-row {
-      display: flex;
-      gap: 15px;
-      align-items: end;
-    }
-
-    .form-row>div {
-      flex: 1;
-    }
-
-    input,
-    select,
-    button {
-      padding: 10px;
-      border: 1px solid #ddd;
-      border-radius: 4px;
+    .selector-label {
       font-size: 14px;
+      font-weight: 600;
+      color: #333;
+      margin-bottom: 8px;
+      padding: 8px 12px;
+      border: 2px solid #ff4757;
+      border-radius: 6px;
+      display: inline-block;
+      background: white;
     }
 
-    input:focus,
-    select:focus {
+    .table-dropdown {
+      width: 100%;
+      padding: 12px 16px;
+      border: 1px solid #e1e5e9;
+      border-radius: 8px;
+      font-size: 14px;
+      background: white;
+      color: #333;
+      cursor: pointer;
+      position: relative;
+    }
+
+    .table-dropdown:focus {
       outline: none;
-      border-color: #4285f4;
-      box-shadow: 0 0 5px rgba(66, 133, 244, 0.3);
+      border-color: #ff4757;
+      box-shadow: 0 0 0 3px rgba(255, 71, 87, 0.1);
     }
 
-    button {
+    .compare-section {
+      text-align: center;
+      margin: 30px 0;
+    }
+
+    .compare-btn {
       background: #4285f4;
       color: white;
       border: none;
+      padding: 12px 24px;
+      border-radius: 8px;
+      font-size: 14px;
+      font-weight: 600;
       cursor: pointer;
-      transition: background 0.3s;
+      transition: all 0.2s;
+      position: relative;
+      overflow: hidden;
     }
 
-    button:hover {
+    .compare-btn:hover {
       background: #3367d6;
+      transform: translateY(-1px);
+      box-shadow: 0 4px 12px rgba(66, 133, 244, 0.3);
     }
 
-    button:disabled {
-      background: #ccc;
+    .compare-btn:active {
+      transform: translateY(0);
+    }
+
+    .compare-text {
+      color: #ff4757;
+      font-size: 16px;
+      font-weight: 600;
+      margin-top: 12px;
+    }
+
+    .query-section {
+      margin: 25px 0;
+    }
+
+    .query-label {
+      color: #ff4757;
+      font-size: 16px;
+      font-weight: 600;
+      margin-bottom: 15px;
+    }
+
+    .action-buttons {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      margin-top: 30px;
+    }
+
+    .action-btn {
+      width: 100%;
+      padding: 16px;
+      border: 2px solid #ff4757;
+      border-radius: 8px;
+      background: white;
+      color: #ff4757;
+      font-size: 16px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .action-btn:hover:not(:disabled) {
+      background: #ff4757;
+      color: white;
+      transform: translateY(-1px);
+      box-shadow: 0 4px 12px rgba(255, 71, 87, 0.2);
+    }
+
+    .action-btn:active {
+      transform: translateY(0);
+    }
+
+    .action-btn.primary {
+      background: #ff4757;
+      color: white;
+    }
+
+    .action-btn.primary:hover:not(:disabled) {
+      background: #ff3742;
+    }
+
+    .action-btn:disabled {
+      opacity: 0.5;
       cursor: not-allowed;
+      transform: none;
+      box-shadow: none;
+    }
+
+    .hidden {
+      display: none;
+    }
+
+    /* 数据预览表格 */
+    .preview-section {
+      margin: 25px 0;
+    }
+
+    .preview-table {
+      width: 100%;
+      border-collapse: collapse;
+      background: white;
+      border-radius: 8px;
+      overflow: hidden;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+    }
+
+    .preview-table th,
+    .preview-table td {
+      padding: 12px 16px;
+      text-align: left;
+      border-bottom: 1px solid #f0f0f0;
+    }
+
+    .preview-table th {
+      background: #f8f9fa;
+      font-weight: 600;
+      color: #333;
+      font-size: 13px;
+    }
+
+    .preview-table td {
+      font-size: 14px;
+      color: #666;
+    }
+
+    .preview-table tr:last-child td {
+      border-bottom: none;
+    }
+
+    .preview-table tr:hover {
+      background: #f8f9fa;
+    }
+
+    .no-data {
+      text-align: center;
+      padding: 40px;
+      color: #999;
+      font-style: italic;
+    }
+
+    .data-count {
+      color: #666;
+      font-size: 14px;
+      margin-bottom: 12px;
+    }
+
+    /* 操作日志 */
+    .log-section {
+      margin-top: 30px;
+    }
+
+    .log-title {
+      font-size: 16px;
+      font-weight: 600;
+      color: #333;
+      margin-bottom: 12px;
     }
 
     #log {
       background: #f8f9fa;
-      border: 1px solid #ddd;
-      border-radius: 4px;
-      padding: 15px;
+      border: 1px solid #e1e5e9;
+      border-radius: 8px;
+      padding: 16px;
       white-space: pre-wrap;
-      font-family: monospace;
-      max-height: 300px;
+      font-family: 'SF Mono', Monaco, monospace;
+      max-height: 200px;
       overflow-y: auto;
-    }
-
-    small {
-      color: #666;
-      font-size: 0.9em;
-    }
-
-    /* 差异结果样式 */
-    .diff-summary {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
-      gap: 10px;
-      margin-bottom: 15px;
-    }
-
-    .diff-item {
-      padding: 12px;
-      border-radius: 6px;
-      text-align: center;
-      font-size: 13px;
-      border: 1px solid;
-    }
-
-    .diff-new {
-      background: #f6ffed;
-      border-color: #b7eb8f;
-      color: #389e0d;
-    }
-
-    .diff-deleted {
-      background: #fff2f0;
-      border-color: #ffccc7;
-      color: #cf1322;
-    }
-
-    .diff-modified {
-      background: #fffbe6;
-      border-color: #ffe58f;
-      color: #d48806;
-    }
-
-    .diff-same {
-      background: #f0f7ff;
-      border-color: #91d5ff;
-      color: #1890ff;
-    }
-
-    .diff-count {
-      font-size: 18px;
-      font-weight: bold;
-      margin-bottom: 4px;
-    }
-
-    /* 字段映射样式 */
-    #fieldMappingContainer {
-      border: 1px solid #ddd;
-      border-radius: 6px;
-      overflow: hidden;
-    }
-
-    .mapping-header {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      background: #f5f5f5;
-      border-bottom: 1px solid #ddd;
-    }
-
-    .source-header, .target-header {
-      padding: 12px;
-      font-weight: bold;
-      text-align: center;
-      border-right: 1px solid #ddd;
-    }
-
-    .target-header {
-      border-right: none;
-    }
-
-    .mapping-row {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      border-bottom: 1px solid #eee;
-      min-height: 50px;
-      align-items: center;
-    }
-
-    .mapping-row:last-child {
-      border-bottom: none;
-    }
-
-    .source-field, .target-field {
-      padding: 12px;
-      border-right: 1px solid #eee;
-      display: flex;
-      align-items: center;
-    }
-
-    .target-field {
-      border-right: none;
-    }
-
-    .field-info {
-      flex: 1;
-    }
-
-    .field-name {
-      font-weight: 500;
-      color: #333;
-    }
-
-    .field-type {
       font-size: 12px;
+      line-height: 1.4;
       color: #666;
-      margin-top: 2px;
     }
 
-    .mapping-select {
+    /* 隐藏的授权区域 */
+    .auth-section {
+      position: fixed;
+      top: 10px;
+      right: 10px;
+      background: white;
+      padding: 15px;
+      border-radius: 8px;
+      box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+      z-index: 1000;
+      max-width: 300px;
+    }
+
+    .auth-section input {
       width: 100%;
-      padding: 6px 8px;
+      padding: 8px 12px;
+      margin-bottom: 10px;
       border: 1px solid #ddd;
       border-radius: 4px;
-      font-size: 13px;
+      font-size: 12px;
     }
 
-    .mapping-status {
-      display: inline-block;
-      padding: 2px 6px;
-      border-radius: 3px;
-      font-size: 11px;
-      margin-left: 8px;
-    }
-
-    .status-mapped {
-      background: #f6ffed;
-      color: #389e0d;
-      border: 1px solid #b7eb8f;
-    }
-
-    .status-unmapped {
-      background: #fff2f0;
-      color: #cf1322;
-      border: 1px solid #ffccc7;
-    }
-
-    /* 高级筛选样式 */
-    .filter-controls {
-      display: grid;
-      grid-template-columns: 1fr 1fr 1fr auto;
-      gap: 10px;
-      align-items: center;
-      margin-bottom: 15px;
-    }
-
-    .filter-item {
-      background: #f8f9fa;
-      border: 1px solid #dee2e6;
-      border-radius: 4px;
-      padding: 10px;
-      margin-bottom: 8px;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-    }
-
-    .filter-text {
-      flex: 1;
-      font-size: 14px;
-    }
-
-    .filter-remove {
-      background: #dc3545;
+    .auth-section button {
+      width: 100%;
+      padding: 8px;
+      background: #4285f4;
       color: white;
       border: none;
-      border-radius: 3px;
-      padding: 4px 8px;
-      cursor: pointer;
-      font-size: 12px;
-    }
-
-    /* 进度条样式 */
-    .progress-container {
-      margin: 15px 0;
-    }
-
-    .progress-bar {
-      width: 100%;
-      height: 20px;
-      background: #f0f0f0;
-      border-radius: 10px;
-      overflow: hidden;
-      margin-bottom: 10px;
-    }
-
-    .progress-fill {
-      height: 100%;
-      background: linear-gradient(90deg, #4285f4, #34a853);
-      width: 0%;
-      transition: width 0.3s ease;
-      border-radius: 10px;
-    }
-
-    .progress-text {
-      text-align: center;
-      font-weight: bold;
-      color: #333;
-      margin-bottom: 10px;
-    }
-
-    .progress-details {
-      background: #f8f9fa;
-      border: 1px solid #dee2e6;
       border-radius: 4px;
-      padding: 10px;
-      font-family: monospace;
       font-size: 12px;
-      max-height: 150px;
-      overflow-y: auto;
+      cursor: pointer;
     }
 
+    .auth-toggle {
+      position: fixed;
+      top: 10px;
+      right: 10px;
+      background: #4285f4;
+      color: white;
+      border: none;
+      padding: 8px 12px;
+      border-radius: 4px;
+      font-size: 12px;
+      cursor: pointer;
+      z-index: 1001;
+    }
 
+    .row-checkbox {
+      width: auto;
+      margin-right: 8px;
+    }
+
+    .selected-row {
+      background: #e6f7ff !important;
+    }
   </style>
 </head>
 
 <body>
+  <!-- 授权切换按钮 -->
+  <button class="auth-toggle" onclick="toggleAuth()" id="authToggle">设置授权</button>
+
+  <!-- 隐藏的授权区域 -->
+  <div class="auth-section hidden" id="authSection">
+    <input id="baseId" placeholder="Base ID (自动获取)" />
+    <input id="personalToken" placeholder="PersonalBaseToken" type="password" />
+    <button onclick="testAuth()">测试授权</button>
+    <div style="font-size: 11px; color: #666; margin-top: 8px;" id="authStatus">未授权</div>
+  </div>
+
   <div class="container">
     <div class="header">
-      <h1>飞书多维表格数据复制工具</h1>
-      <p>支持动态授权，通用于任意Base</p>
+      <div class="title">欢迎使用 跨表比对 <span class="highlight">跨表复制</span></div>
+      <div class="subtitle">支持动态授权，通用于任意Base</div>
     </div>
 
     <div class="content">
-      <!-- 授权配置 -->
-      <div class="section">
-        <h3>🔐 授权配置</h3>
-        <div class="form-group">
-          <label>Base ID（自动获取）</label>
-          <input id="baseId" placeholder="自动从URL获取..." readonly />
-        </div>
-        <div class="form-group">
-          <label>PersonalBaseToken（必填）</label>
-          <input id="personalToken" placeholder="请输入此Base的PersonalBaseToken" type="password" />
-          <small>💡 每个Base都有独立的授权码，请在多维表格设置中获取</small>
-        </div>
-        <div class="form-row">
-          <button onclick="testAuth()">🔍 测试授权</button>
-        </div>
+      <!-- 主要选择区域 -->
+      <div class="table-selector">
+        <div class="selector-label">选择源数据表</div>
+        <select class="table-dropdown" id="sourceTable" onchange="onSourceTableChange()">
+          <option value="">请先完成授权后选择表格</option>
+        </select>
       </div>
 
-      <!-- 表格选择 -->
-      <div class="section" id="tableSection" style="display:none;">
-        <h3>📋 表格选择</h3>
-        <div class="form-row">
-          <div>
-            <label>源表格ID</label>
-            <input id="sourceTable" placeholder="输入表格ID (tblXXXXXX)" />
-            <button type="button" onclick="showTableSelector('source')">📋 选择表格</button>
-          </div>
-          <div>
-            <label>目标表格ID</label>
-            <input id="targetTable" placeholder="输入表格ID (tblYYYYYY)" />
-            <button type="button" onclick="showTableSelector('target')">📋 选择表格</button>
-          </div>
-        </div>
-        <div class="form-group">
-          <label>主键字段（用于差异对比）</label>
-          <select id="primaryKeyField">
-            <option value="">自动检测</option>
-          </select>
-          <small>💡 选择用于匹配记录的主键字段，如ID、编号等</small>
-        </div>
+      <div class="table-selector">
+        <div class="selector-label">选择目标数据表</div>
+        <select class="table-dropdown" id="targetTable">
+          <option value="">请先完成授权后选择表格</option>
+        </select>
       </div>
 
-      <!-- 操作模式选择 -->
-      <div class="section" id="operationSection" style="display:none;">
-        <h3>⚙️ 操作模式</h3>
-        <div class="form-group">
-          <label style="display: flex; align-items: center; margin-bottom: 10px;">
-            <input type="radio" name="operationMode" value="preview" checked style="margin-right: 8px; width: auto;">
-            🔍 预览差异（推荐）
-          </label>
-          <small style="margin-left: 24px; margin-bottom: 15px;">先分析差异，再决定是否执行复制</small>
-          
-          <label style="display: flex; align-items: center; margin-bottom: 10px;">
-            <input type="radio" name="operationMode" value="direct" style="margin-right: 8px; width: auto;">
-            🚀 直接复制
-          </label>
-          <small style="margin-left: 24px; margin-bottom: 15px;">跳过分析直接执行复制</small>
-          
-          <label style="display: flex; align-items: center; margin-bottom: 10px;">
-            <input type="radio" name="operationMode" value="mapping" style="margin-right: 8px; width: auto;">
-            🎯 字段映射
-          </label>
-          <small style="margin-left: 24px; margin-bottom: 15px;">手动配置字段对应关系</small>
-          
-          <label style="display: flex; align-items: center; margin-bottom: 10px;">
-            <input type="radio" name="operationMode" value="filter" style="margin-right: 8px; width: auto;">
-            🔧 高级筛选
-          </label>
-          <small style="margin-left: 24px;">按条件筛选要复制的记录</small>
-        </div>
-        <div class="form-row">
-          <button onclick="executeOperation()" id="operationBtn">🔍 开始分析</button>
-        </div>
+      <div class="compare-section">
+        <button class="compare-btn" onclick="loadPreviewData()">
+          <span>对比</span>
+        </button>
+        <div class="compare-text">选择查询字段</div>
       </div>
 
-      <!-- 差异结果显示 -->
-      <div class="section" id="diffResultSection" style="display:none;">
-        <h3>📊 差异分析结果</h3>
-        <div id="diffSummary"></div>
-        <div class="form-row" style="gap: 10px;">
-          <button onclick="executeCopy()" id="executeCopyBtn" style="background: #52c41a;">✅ 确认执行复制</button>
-        </div>
+      <div class="query-section">
+        <div class="query-label">填写查询值</div>
+        <input type="text" class="table-dropdown" id="queryValue" placeholder="请输入要查询的值（可选）" />
       </div>
 
-      <!-- 字段映射界面 -->
-      <div class="section" id="fieldMappingSection" style="display:none;">
-        <h3>🎯 字段映射配置</h3>
-        <div id="fieldMappingContainer">
-          <div class="mapping-header">
-            <div class="source-header">源表格字段</div>
-            <div class="target-header">目标表格字段</div>
-          </div>
-          <div id="fieldMappingList"></div>
-        </div>
-        <div class="form-row" style="margin-top: 20px;">
-          <button onclick="executeWithMapping()" id="executeMappingBtn">🚀 使用映射执行复制</button>
-        </div>
+      <!-- 数据预览区域 -->
+      <div class="preview-section" id="previewSection" style="display: none;">
+        <div class="data-count" id="dataCount">已选：0 条数据</div>
+        <table class="preview-table" id="previewTable">
+          <thead>
+            <tr>
+              <th>选择</th>
+              <th>序号</th>
+              <th id="primaryFieldHeader">主字段</th>
+            </tr>
+          </thead>
+          <tbody id="previewTableBody">
+            <tr>
+              <td colspan="3" class="no-data">请先选择表格并点击对比按钮</td>
+            </tr>
+          </tbody>
+        </table>
       </div>
 
-      <!-- 高级筛选 -->
-      <div class="section" id="advancedFilterSection" style="display:none;">
-        <h3>🔧 高级筛选</h3>
-        <div class="form-group">
-          <label>筛选条件</label>
-          <div class="filter-controls">
-            <select id="filterField">
-              <option value="">选择字段</option>
-            </select>
-            <select id="filterOperator">
-              <option value="equals">等于</option>
-              <option value="contains">包含</option>
-              <option value="startsWith">开头是</option>
-              <option value="endsWith">结尾是</option>
-              <option value="notEmpty">不为空</option>
-              <option value="isEmpty">为空</option>
-            </select>
-            <input id="filterValue" placeholder="筛选值" />
-            <button onclick="addFilter()" type="button">➕ 添加条件</button>
-          </div>
-        </div>
-        <div id="filterList"></div>
-        <div class="form-row" style="margin-top: 15px;">
-          <button onclick="previewWithFilter()" id="previewFilterBtn">🔍 预览筛选结果</button>
-          <button onclick="executeWithFilter()" id="executeFilterBtn" style="background: #52c41a;">🚀 执行筛选复制</button>
-        </div>
+      <!-- 操作按钮 -->
+      <div class="action-buttons">
+        <button class="action-btn" onclick="copySelectedRows()" id="copyRowsBtn" disabled>整行复制</button>
+        <button class="action-btn primary" onclick="copyEntireTable()" id="copyTableBtn" disabled>整表复制</button>
       </div>
 
-      <!-- 批量操作进度 -->
-      <div class="section" id="progressSection" style="display:none;">
-        <h3>📊 操作进度</h3>
-        <div class="progress-container">
-          <div class="progress-bar">
-            <div class="progress-fill" id="progressFill"></div>
-          </div>
-          <div class="progress-text" id="progressText">准备中...</div>
-        </div>
-        <div class="progress-details" id="progressDetails"></div>
-        <div class="form-row" style="margin-top: 15px;">
-          <button onclick="cancelOperation()" id="cancelBtn" style="background: #ff4d4f;">⏹️ 取消操作</button>
-        </div>
-      </div>
-
-
-
-      <!-- 日志 -->
-      <div class="section">
-        <h3>📝 操作日志</h3>
-        <pre id="log">等待操作...</pre>
+      <!-- 操作日志 -->
+      <div class="log-section">
+        <div class="log-title">操作日志</div>
+        <div id="log">请先设置授权信息...</div>
       </div>
     </div>
   </div>
@@ -493,11 +405,29 @@
   <script>
     let currentBaseId = null;
     let currentToken = null;
+    let isAuthorized = false;
+    let sourceTableData = [];
+    let selectedRows = new Set();
+    let primaryFieldId = null;
 
-    // 页面加载时自动获取BaseId
+    // 页面加载时初始化
     window.addEventListener('load', () => {
       autoDetectBaseId();
     });
+
+    // 切换授权面板
+    function toggleAuth() {
+      const authSection = document.getElementById('authSection');
+      const authToggle = document.getElementById('authToggle');
+      
+      if (authSection.classList.contains('hidden')) {
+        authSection.classList.remove('hidden');
+        authToggle.textContent = '隐藏授权';
+      } else {
+        authSection.classList.add('hidden');
+        authToggle.textContent = '设置授权';
+      }
+    }
 
     // 自动从URL获取BaseId
     function autoDetectBaseId() {
@@ -509,24 +439,22 @@
         document.getElementById('baseId').value = currentBaseId;
         log(`✅ 自动获取BaseId: ${currentBaseId}`);
       } else {
-        // 如果无法自动获取，使用默认值
-        currentBaseId = 'KnX9bIOTKaE3trspPCycfFMjnkg';
-        document.getElementById('baseId').value = currentBaseId + ' (默认)';
-        log('⚠️ 无法自动获取BaseId，使用默认值');
+        log('⚠️ 无法从URL自动获取BaseId，请手动输入');
+        document.getElementById('baseId').placeholder = '请输入Base ID';
       }
     }
 
     // 测试授权
     async function testAuth() {
       const token = document.getElementById('personalToken').value.trim();
-      const baseId = document.getElementById('baseId').value.replace(' (默认)', '').trim();
+      const baseId = document.getElementById('baseId').value.trim();
 
       if (!token) {
         return log('❗ 请输入PersonalBaseToken');
       }
 
       if (!baseId) {
-        return log('❗ BaseId不能为空');
+        return log('❗ 请输入Base ID');
       }
 
       log('🔍 正在测试授权...');
@@ -542,10 +470,17 @@
         if (data.success) {
           currentToken = token;
           currentBaseId = baseId;
-          document.getElementById('tableSection').style.display = 'block';
-          document.getElementById('operationSection').style.display = 'block';
+          isAuthorized = true;
+          
+          document.getElementById('authStatus').textContent = '授权成功';
+          document.getElementById('authStatus').style.color = '#52c41a';
+          
+          await loadTables();
           log(`✅ 授权成功！可访问 ${data.tableCount} 个表格`);
         } else {
+          isAuthorized = false;
+          document.getElementById('authStatus').textContent = '授权失败';
+          document.getElementById('authStatus').style.color = '#ff4d4f';
           log(`❌ 授权失败: ${data.error}`);
         }
       } catch (error) {
@@ -553,13 +488,9 @@
       }
     }
 
-    // 显示表格选择器
-    async function showTableSelector(type) {
-      if (!currentToken || !currentBaseId) {
-        return log('❗ 请先完成授权测试');
-      }
-
-      log('📋 正在获取表格列表...');
+    // 加载表格列表
+    async function loadTables() {
+      if (!isAuthorized) return;
 
       try {
         const response = await fetch('/api/tables', {
@@ -570,620 +501,263 @@
 
         const data = await response.json();
         if (data.success) {
-          const tables = data.tables;
-          const tableList = tables.map((t, i) => `${i + 1}. ${t.name} (${t.table_id})`).join('\n');
-          const selected = prompt(`请选择${type === 'source' ? '源' : '目标'}表格:\n\n${tableList}\n\n请输入序号:`);
-
-          if (selected) {
-            const index = parseInt(selected) - 1;
-            if (index >= 0 && index < tables.length) {
-              const targetInput = type === 'source' ? 'sourceTable' : 'targetTable';
-              document.getElementById(targetInput).value = tables[index].table_id;
-              log(`✅ 已选择${type === 'source' ? '源' : '目标'}表格: ${tables[index].name}`);
-              
-              // 如果选择的是源表格，自动加载主键字段选项
-              if (type === 'source') {
-                await loadPrimaryKeyOptions(tables[index].table_id);
-              }
-            }
-          }
-        } else {
-          log(`❌ 获取表格列表失败: ${data.error}`);
+          const sourceSelect = document.getElementById('sourceTable');
+          const targetSelect = document.getElementById('targetTable');
+          
+          sourceSelect.innerHTML = '<option value="">请选择源数据表</option>';
+          targetSelect.innerHTML = '<option value="">请选择目标数据表</option>';
+          
+          data.tables.forEach(table => {
+            const sourceOption = document.createElement('option');
+            sourceOption.value = table.table_id;
+            sourceOption.textContent = table.name;
+            sourceSelect.appendChild(sourceOption);
+            
+            const targetOption = document.createElement('option');
+            targetOption.value = table.table_id;
+            targetOption.textContent = table.name;
+            targetSelect.appendChild(targetOption);
+          });
+          
+          log(`✅ 已加载 ${data.tables.length} 个表格`);
         }
       } catch (error) {
-        log(`❌ 网络错误: ${error.message}`);
+        log(`❌ 加载表格失败: ${error.message}`);
       }
     }
 
-    // 加载主键字段选项
-    async function loadPrimaryKeyOptions(tableId) {
+    // 源表格变化时的处理
+    async function onSourceTableChange() {
+      const sourceTableId = document.getElementById('sourceTable').value;
+      if (!sourceTableId) return;
+
+      // 重置预览数据
+      document.getElementById('previewSection').style.display = 'none';
+      selectedRows.clear();
+      updateButtonStates();
+      
+      log(`📋 已选择源表格: ${sourceTableId}`);
+    }
+
+    // 加载预览数据
+    async function loadPreviewData() {
+      const sourceTableId = document.getElementById('sourceTable').value;
+      const targetTableId = document.getElementById('targetTable').value;
+
+      if (!sourceTableId) {
+        return log('❗ 请先选择源数据表');
+      }
+
+      if (!targetTableId) {
+        return log('❗ 请先选择目标数据表');
+      }
+
+      if (!isAuthorized) {
+        return log('❗ 请先完成授权');
+      }
+
+      log('🔍 正在加载数据预览...');
+
       try {
-        const response = await fetch('/api/fields', {
+        // 获取源表格字段信息
+        const fieldsResponse = await fetch('/api/fields', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ 
             baseId: currentBaseId, 
             personalToken: currentToken,
-            tableId: tableId
+            tableId: sourceTableId
           })
         });
 
-        const data = await response.json();
-        if (data.success) {
-          const select = document.getElementById('primaryKeyField');
-          select.innerHTML = '<option value="">自动检测</option>';
-          
-          data.fields.forEach(field => {
-            const option = document.createElement('option');
-            option.value = field.field_id;
-            option.textContent = `${field.field_name} (${field.type})`;
-            select.appendChild(option);
-          });
-          
-          log(`✅ 已加载 ${data.fields.length} 个字段选项`);
+        const fieldsData = await fieldsResponse.json();
+        if (!fieldsData.success) {
+          throw new Error('获取字段信息失败');
         }
-      } catch (error) {
-        log(`❌ 加载字段失败: ${error.message}`);
-      }
-    }
 
-    // 执行操作（根据选择的模式）
-    async function executeOperation() {
-      const sourceTable = document.getElementById('sourceTable').value.trim();
-      const targetTable = document.getElementById('targetTable').value.trim();
-      const operationMode = document.querySelector('input[name="operationMode"]:checked').value;
+        // 选择主字段（第一个字段）
+        primaryFieldId = fieldsData.fields[0]?.field_id;
+        const primaryFieldName = fieldsData.fields[0]?.field_name || '主字段';
 
-      if (!sourceTable || !targetTable) {
-        return log('❗ 请先填写源表格和目标表格ID');
-      }
-
-      if (!currentToken || !currentBaseId) {
-        return log('❗ 请先完成授权测试');
-      }
-
-      switch (operationMode) {
-        case 'preview':
-          await previewDifferences();
-          break;
-        case 'direct':
-          await directCopy();
-          break;
-        case 'mapping':
-          await showFieldMapping();
-          break;
-        case 'filter':
-          await showAdvancedFilter();
-          break;
-      }
-    }
-
-    // 预览差异
-    async function previewDifferences() {
-      const sourceTable = document.getElementById('sourceTable').value.trim();
-      const targetTable = document.getElementById('targetTable').value.trim();
-      const primaryKey = document.getElementById('primaryKeyField').value;
-
-      log('🔍 开始分析差异...');
-      
-      const operationBtn = document.getElementById('operationBtn');
-      operationBtn.disabled = true;
-      operationBtn.textContent = '分析中...';
-
-      try {
-        const response = await fetch('/api/analyze-diff', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            sourceTableId: sourceTable,
-            targetTableId: targetTable,
-            baseId: currentBaseId,
-            personalToken: currentToken,
-            primaryKeyField: primaryKey
-          })
-        });
-
-        const data = await response.json();
-        if (data.success) {
-          displayDiffResults(data.results);
-          log(`✅ 差异分析完成！新增: ${data.results.new.length}, 删除: ${data.results.deleted.length}, 修改: ${data.results.modified.length}, 相同: ${data.results.same.length}`);
-        } else {
-          log(`❌ 差异分析失败: ${data.error}`);
-        }
-      } catch (error) {
-        log(`❌ 网络错误: ${error.message}`);
-      } finally {
-        operationBtn.disabled = false;
-        operationBtn.textContent = '🔍 开始分析';
-      }
-    }
-
-    // 直接复制
-    async function directCopy() {
-      const sourceTable = document.getElementById('sourceTable').value.trim();
-      const targetTable = document.getElementById('targetTable').value.trim();
-
-      if (!confirm('确定要直接复制所有数据吗？')) {
-        return;
-      }
-
-      await executeOperationWithProgress('copy', {
-        sourceTableId: sourceTable,
-        targetTableId: targetTable,
-        baseId: currentBaseId,
-        personalToken: currentToken
-      });
-    }
-
-    // 显示高级筛选界面
-    async function showAdvancedFilter() {
-      const sourceTable = document.getElementById('sourceTable').value.trim();
-
-      log('🔧 正在加载高级筛选界面...');
-
-      try {
-        const response = await fetch('/api/fields', {
+        // 获取表格数据
+        const dataResponse = await fetch('/api/table-data', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ 
             baseId: currentBaseId, 
             personalToken: currentToken,
-            tableId: sourceTable
+            tableId: sourceTableId
           })
         });
 
-        const data = await response.json();
-        if (data.success) {
-          // 填充字段选择器
-          const filterField = document.getElementById('filterField');
-          filterField.innerHTML = '<option value="">选择字段</option>';
-          
-          data.fields.forEach(field => {
-            const option = document.createElement('option');
-            option.value = field.field_id;
-            option.textContent = `${field.field_name} (${field.type})`;
-            filterField.appendChild(option);
-          });
-          
-          document.getElementById('advancedFilterSection').style.display = 'block';
-          log(`✅ 高级筛选界面已加载，可选择 ${data.fields.length} 个字段`);
-        } else {
-          log(`❌ 加载字段信息失败: ${data.error}`);
+        const tableData = await dataResponse.json();
+        if (!tableData.success) {
+          throw new Error('获取表格数据失败');
         }
+
+        sourceTableData = tableData.records;
+        displayPreviewData(sourceTableData, primaryFieldName);
+        
+        log(`✅ 已加载 ${sourceTableData.length} 条记录`);
+
       } catch (error) {
-        log(`❌ 网络错误: ${error.message}`);
+        log(`❌ 加载预览数据失败: ${error.message}`);
       }
     }
 
-    // 显示字段映射界面
-    async function showFieldMapping() {
-      const sourceTable = document.getElementById('sourceTable').value.trim();
-      const targetTable = document.getElementById('targetTable').value.trim();
-
-      log('🎯 正在加载字段映射界面...');
-
-      try {
-        const [sourceResponse, targetResponse] = await Promise.all([
-          fetch('/api/fields', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ 
-              baseId: currentBaseId, 
-              personalToken: currentToken,
-              tableId: sourceTable
-            })
-          }),
-          fetch('/api/fields', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ 
-              baseId: currentBaseId, 
-              personalToken: currentToken,
-              tableId: targetTable
-            })
-          })
-        ]);
-
-        const [sourceData, targetData] = await Promise.all([
-          sourceResponse.json(),
-          targetResponse.json()
-        ]);
-
-        if (sourceData.success && targetData.success) {
-          displayFieldMapping(sourceData.fields, targetData.fields);
-          document.getElementById('fieldMappingSection').style.display = 'block';
-          log(`✅ 字段映射界面已加载`);
-        } else {
-          log(`❌ 加载字段信息失败`);
-        }
-      } catch (error) {
-        log(`❌ 网络错误: ${error.message}`);
-      }
-    }
-
-    // 显示差异结果
-    function displayDiffResults(results) {
-      const diffResultSection = document.getElementById('diffResultSection');
-      const diffSummary = document.getElementById('diffSummary');
+    // 显示预览数据
+    function displayPreviewData(records, primaryFieldName) {
+      const queryValue = document.getElementById('queryValue').value.trim().toLowerCase();
       
-      diffResultSection.style.display = 'block';
-      
-      diffSummary.innerHTML = `
-        <div class="diff-summary">
-          <div class="diff-item diff-new">
-            <div class="diff-count">${results.new.length}</div>
-            <div>新增记录</div>
-          </div>
-          <div class="diff-item diff-deleted">
-            <div class="diff-count">${results.deleted.length}</div>
-            <div>删除记录</div>
-          </div>
-          <div class="diff-item diff-modified">
-            <div class="diff-count">${results.modified.length}</div>
-            <div>修改记录</div>
-          </div>
-          <div class="diff-item diff-same">
-            <div class="diff-count">${results.same.length}</div>
-            <div>相同记录</div>
-          </div>
-        </div>
-        <div style="font-size: 12px; color: #666; margin-top: 8px;">
-          💡 新增和修改的记录将被复制到目标表格
-        </div>
-      `;
-      
-      // 存储结果供后续使用
-      window.diffResults = results;
-    }
-
-    // 执行复制（基于差异结果）
-    async function executeCopy() {
-      if (!window.diffResults) {
-        return log('❌ 没有差异分析结果');
+      // 筛选数据
+      let filteredRecords = records;
+      if (queryValue && primaryFieldId) {
+        filteredRecords = records.filter(record => {
+          const fieldValue = record.fields[primaryFieldId];
+          return fieldValue && String(fieldValue).toLowerCase().includes(queryValue);
+        });
       }
 
-      const results = window.diffResults;
-      const totalOperations = results.new.length + results.modified.length;
-      
-      if (totalOperations === 0) {
-        return log('ℹ️ 没有需要复制的记录');
-      }
+      const previewSection = document.getElementById('previewSection');
+      const dataCount = document.getElementById('dataCount');
+      const primaryFieldHeader = document.getElementById('primaryFieldHeader');
+      const tableBody = document.getElementById('previewTableBody');
 
-      if (!confirm(`确定要执行复制操作吗？\n将处理 ${totalOperations} 条记录（${results.new.length} 新增，${results.modified.length} 修改）`)) {
+      previewSection.style.display = 'block';
+      primaryFieldHeader.textContent = primaryFieldName;
+      dataCount.textContent = `已选：${filteredRecords.length} 条数据`;
+
+      if (filteredRecords.length === 0) {
+        tableBody.innerHTML = '<tr><td colspan="3" class="no-data">没有找到匹配的数据</td></tr>';
         return;
       }
 
-      await executeOperationWithProgress('execute-diff-copy', {
-        sourceTableId: document.getElementById('sourceTable').value.trim(),
-        targetTableId: document.getElementById('targetTable').value.trim(),
-        baseId: currentBaseId,
-        personalToken: currentToken,
-        diffResults: results
-      });
-    }
-
-    // 全局变量
-    let currentFilters = [];
-    let operationCancelled = false;
-    let currentOperation = null;
-
-    // 显示字段映射界面
-    function displayFieldMapping(sourceFields, targetFields) {
-      const fieldMappingList = document.getElementById('fieldMappingList');
-      
-      // 自动建立字段映射
-      const autoMapping = {};
-      const targetFieldMap = new Map(targetFields.map(f => [f.field_name.toLowerCase(), f]));
-      
-      let mappingHtml = '';
-      sourceFields.forEach(sourceField => {
-        const matchedTarget = targetFieldMap.get(sourceField.field_name.toLowerCase());
-        const mappedFieldId = matchedTarget ? matchedTarget.field_id : '';
-        
-        if (matchedTarget) {
-          autoMapping[sourceField.field_id] = matchedTarget.field_id;
-        }
-        
-        mappingHtml += `
-          <div class="mapping-row">
-            <div class="source-field">
-              <div class="field-info">
-                <div class="field-name">${sourceField.field_name}</div>
-                <div class="field-type">${sourceField.type}</div>
-              </div>
-              <span class="mapping-status ${matchedTarget ? 'status-mapped' : 'status-unmapped'}">
-                ${matchedTarget ? '已映射' : '未映射'}
-              </span>
-            </div>
-            <div class="target-field">
-              <select class="mapping-select" data-source-field="${sourceField.field_id}" onchange="updateMappingStatus(this)">
-                <option value="">-- 选择目标字段 --</option>
-                ${targetFields.map(tf => 
-                  `<option value="${tf.field_id}" ${tf.field_id === mappedFieldId ? 'selected' : ''}>${tf.field_name} (${tf.type})</option>`
-                ).join('')}
-              </select>
-            </div>
-          </div>
+      tableBody.innerHTML = filteredRecords.map((record, index) => {
+        const primaryValue = record.fields[primaryFieldId] || '无数据';
+        return `
+          <tr>
+            <td><input type="checkbox" class="row-checkbox" data-record-id="${record.record_id}" onchange="toggleRowSelection(this)"></td>
+            <td>${index + 1}</td>
+            <td>${primaryValue}</td>
+          </tr>
         `;
-      });
-      
-      fieldMappingList.innerHTML = mappingHtml;
-      
-      // 存储当前映射
-      window.currentFieldMapping = autoMapping;
-      
-      log(`✅ 自动映射了 ${Object.keys(autoMapping).length} 个字段`);
+      }).join('');
+
+      updateButtonStates();
     }
 
-    // 更新映射状态
-    function updateMappingStatus(selectElement) {
-      const row = selectElement.closest('.mapping-row');
-      const statusElement = row.querySelector('.mapping-status');
-      const sourceFieldId = selectElement.dataset.sourceField;
+    // 切换行选择
+    function toggleRowSelection(checkbox) {
+      const recordId = checkbox.dataset.recordId;
+      const row = checkbox.closest('tr');
       
-      if (selectElement.value) {
-        statusElement.textContent = '已映射';
-        statusElement.className = 'mapping-status status-mapped';
-        window.currentFieldMapping[sourceFieldId] = selectElement.value;
+      if (checkbox.checked) {
+        selectedRows.add(recordId);
+        row.classList.add('selected-row');
       } else {
-        statusElement.textContent = '未映射';
-        statusElement.className = 'mapping-status status-unmapped';
-        delete window.currentFieldMapping[sourceFieldId];
+        selectedRows.delete(recordId);
+        row.classList.remove('selected-row');
       }
+      
+      updateButtonStates();
     }
 
-    // 使用映射执行复制
-    async function executeWithMapping() {
-      if (!window.currentFieldMapping || Object.keys(window.currentFieldMapping).length === 0) {
-        return log('❗ 请至少配置一个字段映射');
+    // 更新按钮状态
+    function updateButtonStates() {
+      const copyRowsBtn = document.getElementById('copyRowsBtn');
+      const copyTableBtn = document.getElementById('copyTableBtn');
+      
+      const hasSourceData = sourceTableData.length > 0;
+      const hasSelectedRows = selectedRows.size > 0;
+      const hasTargetTable = document.getElementById('targetTable').value;
+      
+      copyRowsBtn.disabled = !hasSelectedRows || !hasTargetTable;
+      copyTableBtn.disabled = !hasSourceData || !hasTargetTable;
+    }
+
+    // 整行复制
+    async function copySelectedRows() {
+      if (selectedRows.size === 0) {
+        return log('❗ 请先选择要复制的行');
       }
 
-      const sourceTable = document.getElementById('sourceTable').value.trim();
-      const targetTable = document.getElementById('targetTable').value.trim();
+      const targetTableId = document.getElementById('targetTable').value;
+      if (!targetTableId) {
+        return log('❗ 请先选择目标表格');
+      }
 
-      if (!confirm('确定要使用当前字段映射执行复制吗？')) {
+      const selectedRecords = sourceTableData.filter(record => selectedRows.has(record.record_id));
+      
+      if (!confirm(`确定要复制选中的 ${selectedRecords.length} 条记录吗？`)) {
         return;
       }
 
-      await executeOperationWithProgress('copy-with-mapping', {
-        sourceTableId: sourceTable,
-        targetTableId: targetTable,
-        baseId: currentBaseId,
-        personalToken: currentToken,
-        fieldMapping: window.currentFieldMapping
-      });
-    }
+      log(`🚀 开始复制选中的 ${selectedRecords.length} 条记录...`);
 
-    // 监听操作模式变化
-    document.addEventListener('DOMContentLoaded', () => {
-      document.querySelectorAll('input[name="operationMode"]').forEach(radio => {
-        radio.addEventListener('change', () => {
-          const operationBtn = document.getElementById('operationBtn');
-          const selectedMode = document.querySelector('input[name="operationMode"]:checked').value;
-          
-          switch (selectedMode) {
-            case 'preview':
-              operationBtn.textContent = '🔍 开始分析';
-              break;
-            case 'direct':
-              operationBtn.textContent = '🚀 开始复制';
-              break;
-            case 'mapping':
-              operationBtn.textContent = '🎯 配置映射';
-              break;
-            case 'filter':
-              operationBtn.textContent = '🔧 配置筛选';
-              break;
-          }
-        });
-      });
-    });
-
-    // 高级筛选功能
-    function addFilter() {
-      const field = document.getElementById('filterField').value;
-      const operator = document.getElementById('filterOperator').value;
-      const value = document.getElementById('filterValue').value;
-
-      if (!field) {
-        return log('❗ 请选择筛选字段');
-      }
-
-      if (['equals', 'contains', 'startsWith', 'endsWith'].includes(operator) && !value) {
-        return log('❗ 请输入筛选值');
-      }
-
-      const filter = { field, operator, value };
-      currentFilters.push(filter);
-      
-      updateFilterDisplay();
-      
-      // 清空输入
-      document.getElementById('filterField').value = '';
-      document.getElementById('filterValue').value = '';
-      
-      log(`✅ 已添加筛选条件: ${getFilterDescription(filter)}`);
-    }
-
-    function removeFilter(index) {
-      currentFilters.splice(index, 1);
-      updateFilterDisplay();
-      log('✅ 已移除筛选条件');
-    }
-
-    function updateFilterDisplay() {
-      const filterList = document.getElementById('filterList');
-      
-      if (currentFilters.length === 0) {
-        filterList.innerHTML = '<div style="color: #666; font-style: italic;">暂无筛选条件</div>';
-        return;
-      }
-
-      filterList.innerHTML = currentFilters.map((filter, index) => `
-        <div class="filter-item">
-          <span class="filter-text">${getFilterDescription(filter)}</span>
-          <button class="filter-remove" onclick="removeFilter(${index})">删除</button>
-        </div>
-      `).join('');
-    }
-
-    function getFilterDescription(filter) {
-      const operatorNames = {
-        equals: '等于',
-        contains: '包含',
-        startsWith: '开头是',
-        endsWith: '结尾是',
-        notEmpty: '不为空',
-        isEmpty: '为空'
-      };
-      
-      const fieldName = document.querySelector(`#filterField option[value="${filter.field}"]`)?.textContent || filter.field;
-      const operatorName = operatorNames[filter.operator];
-      
-      if (['notEmpty', 'isEmpty'].includes(filter.operator)) {
-        return `${fieldName} ${operatorName}`;
-      } else {
-        return `${fieldName} ${operatorName} "${filter.value}"`;
-      }
-    }
-
-    // 预览筛选结果
-    async function previewWithFilter() {
-      if (currentFilters.length === 0) {
-        return log('❗ 请至少添加一个筛选条件');
-      }
-
-      log('🔍 正在预览筛选结果...');
-      
       try {
-        const response = await fetch('/api/preview-filter', {
+        const response = await fetch('/api/copy-records', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
-            sourceTableId: document.getElementById('sourceTable').value.trim(),
+            sourceTableId: document.getElementById('sourceTable').value,
+            targetTableId: targetTableId,
             baseId: currentBaseId,
             personalToken: currentToken,
-            filters: currentFilters
+            records: selectedRecords
           })
         });
 
         const data = await response.json();
         if (data.success) {
-          log(`✅ 筛选预览完成！匹配 ${data.matchedCount} 条记录，总共 ${data.totalCount} 条记录`);
-          document.getElementById('advancedFilterSection').style.display = 'block';
+          log(`✅ 整行复制完成！成功复制 ${data.copied} 条记录`);
+          selectedRows.clear();
+          // 重新加载预览数据以更新选择状态
+          displayPreviewData(sourceTableData, document.getElementById('primaryFieldHeader').textContent);
         } else {
-          log(`❌ 筛选预览失败: ${data.error}`);
+          log(`❌ 整行复制失败: ${data.error}`);
         }
       } catch (error) {
         log(`❌ 网络错误: ${error.message}`);
       }
     }
 
-    // 执行筛选复制
-    async function executeWithFilter() {
-      if (currentFilters.length === 0) {
-        return log('❗ 请至少添加一个筛选条件');
+    // 整表复制
+    async function copyEntireTable() {
+      const sourceTableId = document.getElementById('sourceTable').value;
+      const targetTableId = document.getElementById('targetTable').value;
+
+      if (!sourceTableId || !targetTableId) {
+        return log('❗ 请先选择源表格和目标表格');
       }
 
-      if (!confirm('确定要执行筛选复制吗？')) {
+      if (!confirm(`确定要复制整个表格的所有数据吗？\n将复制 ${sourceTableData.length} 条记录`)) {
         return;
       }
 
-      await executeOperationWithProgress('filter-copy', {
-        sourceTableId: document.getElementById('sourceTable').value.trim(),
-        targetTableId: document.getElementById('targetTable').value.trim(),
-        baseId: currentBaseId,
-        personalToken: currentToken,
-        filters: currentFilters
-      });
-    }
-
-    // 带进度的操作执行
-    async function executeOperationWithProgress(operationType, params) {
-      operationCancelled = false;
-      currentOperation = operationType;
-      
-      // 显示进度区域
-      document.getElementById('progressSection').style.display = 'block';
-      updateProgress(0, '准备中...', '正在初始化操作...');
+      log(`🚀 开始整表复制，共 ${sourceTableData.length} 条记录...`);
 
       try {
-        const response = await fetch(`/api/${operationType}`, {
+        const response = await fetch('/api/copy', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(params)
+          body: JSON.stringify({
+            sourceTableId: sourceTableId,
+            targetTableId: targetTableId,
+            baseId: currentBaseId,
+            personalToken: currentToken
+          })
         });
 
-        if (!response.ok) {
-          throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+        const data = await response.json();
+        if (data.success) {
+          log(`✅ 整表复制完成！成功复制 ${data.copied} 条记录`);
+        } else {
+          log(`❌ 整表复制失败: ${data.error}`);
         }
-
-        // 模拟进度更新（实际项目中应该通过WebSocket或轮询获取真实进度）
-        await simulateProgress(response);
-
       } catch (error) {
-        log(`❌ 操作失败: ${error.message}`);
-        updateProgress(0, '操作失败', error.message);
-        
-
-      } finally {
-        currentOperation = null;
-        setTimeout(() => {
-          document.getElementById('progressSection').style.display = 'none';
-        }, 3000);
+        log(`❌ 网络错误: ${error.message}`);
       }
     }
-
-    // 模拟进度更新
-    async function simulateProgress(response) {
-      const steps = [
-        { progress: 10, text: '正在分析数据...', detail: '读取源表格结构' },
-        { progress: 30, text: '正在处理记录...', detail: '应用筛选条件' },
-        { progress: 60, text: '正在复制数据...', detail: '写入目标表格' },
-        { progress: 90, text: '正在完成操作...', detail: '验证复制结果' },
-        { progress: 100, text: '操作完成', detail: '所有数据已成功处理' }
-      ];
-
-      for (const step of steps) {
-        if (operationCancelled) {
-          updateProgress(step.progress, '操作已取消', '用户取消了操作');
-          return;
-        }
-
-        updateProgress(step.progress, step.text, step.detail);
-        await new Promise(resolve => setTimeout(resolve, 1000));
-      }
-
-      // 获取最终结果
-      const data = await response.json();
-      if (data.success) {
-        log(`✅ 操作完成！处理了 ${data.processed || 0} 条记录`);
-      } else {
-        log(`❌ 操作失败: ${data.error}`);
-      }
-    }
-
-    // 更新进度显示
-    function updateProgress(percentage, text, detail) {
-      document.getElementById('progressFill').style.width = `${percentage}%`;
-      document.getElementById('progressText').textContent = `${text} (${percentage}%)`;
-      
-      const detailsElement = document.getElementById('progressDetails');
-      detailsElement.textContent += `[${new Date().toLocaleTimeString()}] ${detail}\n`;
-      detailsElement.scrollTop = detailsElement.scrollHeight;
-    }
-
-    // 取消操作
-    function cancelOperation() {
-      if (currentOperation) {
-        operationCancelled = true;
-        log('⏹️ 正在取消操作...');
-      }
-    }
-
-    // 页面加载时初始化
-    window.addEventListener('load', () => {
-      updateFilterDisplay();
-    });
 
     // 日志函数
     function log(message) {
