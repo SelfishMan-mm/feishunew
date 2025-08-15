@@ -1,6 +1,6 @@
 const { BaseClient } = require('@lark-base-open/node-sdk');
 
-export default async function handler(req, res) {
+module.exports = async function handler(req, res) {
   if (req.method !== 'POST') return res.status(405).end();
 
   const { sourceTableId, targetTableId } = req.body;

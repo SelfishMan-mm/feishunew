@@ -1,11 +1,11 @@
 {
   "functions": {
-    "api/copy.js": {
+    "copyRecords/api/*.js": {
       "runtime": "nodejs18.x"
     }
   },
   "routes": [
-    { "src": "/api/copy", "dest": "/api/copy.js" },
-    { "src": "/(.*)", "dest": "/public/$1" }
+    { "src": "/api/(.*)", "dest": "/copyRecords/api/$1" },
+    { "src": "/(.*)", "dest": "/copyRecords/public/$1" }
   ]
 }
