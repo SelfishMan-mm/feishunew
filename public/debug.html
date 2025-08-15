@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>调试页面</title>
+  <style>
+    body { font-family: Arial; margin: 20px; }
+    input, button { width: 100%; padding: 8px; margin: 4px 0; }
+    #log { white-space: pre-wrap; background: #f5f5f5; padding: 10px; border: 1px solid #ddd; }
+  </style>
+</head>
+<body>
+  <h3>调试页面</h3>
+  
+  <h4>1. 测试授权</h4>
+  <input id="baseId" placeholder="Base ID" value="KnX9bIOTKaE3trspPCycfFMjnkg" />
+  <input id="token" placeholder="PersonalBaseToken" type="password" />
+  <button onclick="testAuth()">测试授权</button>
+  
+  <h4>2. 复制数据</h4>
+  <input id="source" placeholder="源表 ID" />
+  <input id="target" placeholder="目标表 ID" />
+  <button onclick="testCopy()">测试复制</button>
+  
+  <h4>日志</h4>
+  <pre id="log"></pre>
+
+  <script>
+    function log(message) {
+      const logEl = document.getElementById('log');
+      const time = new Date().toLocaleTimeString();
+      logEl.textContent += `[${time}] ${message}\n`;
+      logEl.scrollTop = logEl.scrollHeight;
+    }
+
+    async function testAuth() {
+      const baseId = document.getElementById('baseId').value;
+      const token = document.getElementById('token').value;
+      
+      if (!baseId || !token) {
+        return log('❗ 请填写BaseId和Token');
+      }
+
+      log('🔍 测试授权...');
+      
+      try {
+        const res = await fetch('/api/test-auth', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ baseId, personalToken: token })
+        });
+        
+        const data = await res.json();
+        log(`授权结果: ${JSON.stringify(data, null, 2)}`);
+      } catch (e) {
+        log(`❌ 错误: ${e.message}`);
+      }
+    }
+
+    async function testCopy() {
+      const baseId = document.getElementById('baseId').value;
+      const token = document.getElementById('token').value;
+      const source = document.getElementById('source').value;
+      const target = document.getElementById('target').value;
+      
+      if (!baseId || !token || !source || !target) {
+        return log('❗ 请填写所有字段');
+      }
+
+      log('🚀 测试复制...');
+      
+      try {
+        const res = await fetch('/api/copy', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ 
+            baseId, 
+            personalToken: token,
+            sourceTableId: source,
+            targetTableId: target
+          })
+        });
+        
+        const data = await res.json();
+        log(`复制结果: ${JSON.stringify(data, null, 2)}`);
+      } catch (e) {
+        log(`❌ 错误: ${e.message}`);
+      }
+    }
+  </script>
+</body>
+</html>

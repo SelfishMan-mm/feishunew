@@ -1,34 +1,320 @@
 <!DOCTYPE html>
 <html>
+
 <head>
   <meta charset="utf-8">
-  <title>字段匹配复制</title>
-  <style>body{font-family:Arial;margin:20px}input,button{width:100%;padding:8px;margin:4px 0}#log{white-space:pre-wrap}</style>
+  <title>飞书多维表格数据复制工具</title>
+  <style>
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: 'Segoe UI', Arial, sans-serif;
+      margin: 0;
+      padding: 20px;
+      background: #f5f5f5;
+    }
+
+    .container {
+      max-width: 800px;
+      margin: 0 auto;
+      background: white;
+      border-radius: 8px;
+      box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+    }
+
+    .header {
+      background: #4285f4;
+      color: white;
+      padding: 20px;
+      border-radius: 8px 8px 0 0;
+    }
+
+    .content {
+      padding: 20px;
+    }
+
+    .section {
+      margin-bottom: 30px;
+    }
+
+    .section h3 {
+      color: #333;
+      border-bottom: 2px solid #4285f4;
+      padding-bottom: 5px;
+    }
+
+    .form-group {
+      margin-bottom: 15px;
+    }
+
+    .form-group label {
+      display: block;
+      margin-bottom: 5px;
+      font-weight: bold;
+      color: #555;
+    }
+
+    .form-row {
+      display: flex;
+      gap: 15px;
+      align-items: end;
+    }
+
+    .form-row>div {
+      flex: 1;
+    }
+
+    input,
+    select,
+    button {
+      padding: 10px;
+      border: 1px solid #ddd;
+      border-radius: 4px;
+      font-size: 14px;
+    }
+
+    input:focus,
+    select:focus {
+      outline: none;
+      border-color: #4285f4;
+      box-shadow: 0 0 5px rgba(66, 133, 244, 0.3);
+    }
+
+    button {
+      background: #4285f4;
+      color: white;
+      border: none;
+      cursor: pointer;
+      transition: background 0.3s;
+    }
+
+    button:hover {
+      background: #3367d6;
+    }
+
+    button:disabled {
+      background: #ccc;
+      cursor: not-allowed;
+    }
+
+    #log {
+      background: #f8f9fa;
+      border: 1px solid #ddd;
+      border-radius: 4px;
+      padding: 15px;
+      white-space: pre-wrap;
+      font-family: monospace;
+      max-height: 300px;
+      overflow-y: auto;
+    }
+
+    small {
+      color: #666;
+      font-size: 0.9em;
+    }
+  </style>
 </head>
+
 <body>
-  <h3>字段匹配复制</h3>
-  <input id="source" placeholder="源表 ID" />
-  <input id="target" placeholder="目标表 ID" />
-  <button onclick="run()">开始复制</button>
-  <pre id="log"></pre>
+  <div class="container">
+    <div class="header">
+      <h1>飞书多维表格数据复制工具</h1>
+      <p>支持动态授权，通用于任意Base</p>
+    </div>
+
+    <div class="content">
+      <!-- 授权配置 -->
+      <div class="section">
+        <h3>🔐 授权配置</h3>
+        <div class="form-group">
+          <label>Base ID（自动获取）</label>
+          <input id="baseId" placeholder="自动从URL获取..." readonly />
+        </div>
+        <div class="form-group">
+          <label>PersonalBaseToken（必填）</label>
+          <input id="personalToken" placeholder="请输入此Base的PersonalBaseToken" type="password" />
+          <small>💡 每个Base都有独立的授权码，请在多维表格设置中获取</small>
+        </div>
+        <div class="form-row">
+          <button onclick="testAuth()">🔍 测试授权</button>
+        </div>
+      </div>
+
+      <!-- 表格选择 -->
+      <div class="section" id="tableSection" style="display:none;">
+        <h3>📋 表格选择</h3>
+        <div class="form-row">
+          <div>
+            <label>源表格ID</label>
+            <input id="sourceTable" placeholder="输入表格ID (tblXXXXXX)" />
+            <button type="button" onclick="showTableSelector('source')">📋 选择表格</button>
+          </div>
+          <div>
+            <label>目标表格ID</label>
+            <input id="targetTable" placeholder="输入表格ID (tblYYYYYY)" />
+            <button type="button" onclick="showTableSelector('target')">📋 选择表格</button>
+          </div>
+        </div>
+        <div class="form-row">
+          <button onclick="startCopy()">🚀 开始复制</button>
+        </div>
+      </div>
+
+      <!-- 日志 -->
+      <div class="section">
+        <h3>📝 操作日志</h3>
+        <pre id="log">等待操作...</pre>
+      </div>
+    </div>
+  </div>
 
   <script>
-    async function run() {
-      const [s, t, log] = ['source', 'target', 'log'].map(id => document.getElementById(id));
-      if (!s.value || !t.value) return log.textContent = '❗ 请填表 ID';
-      log.textContent = '⏳ 复制中...';
+    let currentBaseId = null;
+    let currentToken = null;
+
+    // 页面加载时自动获取BaseId
+    window.addEventListener('load', () => {
+      autoDetectBaseId();
+    });
+
+    // 自动从URL获取BaseId
+    function autoDetectBaseId() {
+      const currentUrl = window.location.href;
+      const baseIdMatch = currentUrl.match(/\/base\/([a-zA-Z0-9]+)/);
+
+      if (baseIdMatch) {
+        currentBaseId = baseIdMatch[1];
+        document.getElementById('baseId').value = currentBaseId;
+        log(`✅ 自动获取BaseId: ${currentBaseId}`);
+      } else {
+        // 如果无法自动获取，使用默认值
+        currentBaseId = 'KnX9bIOTKaE3trspPCycfFMjnkg';
+        document.getElementById('baseId').value = currentBaseId + ' (默认)';
+        log('⚠️ 无法自动获取BaseId，使用默认值');
+      }
+    }
+
+    // 测试授权
+    async function testAuth() {
+      const token = document.getElementById('personalToken').value.trim();
+      const baseId = document.getElementById('baseId').value.replace(' (默认)', '').trim();
+
+      if (!token) {
+        return log('❗ 请输入PersonalBaseToken');
+      }
+
+      if (!baseId) {
+        return log('❗ BaseId不能为空');
+      }
+
+      log('🔍 正在测试授权...');
+
       try {
-        const res = await fetch('/api/copy', {
+        const response = await fetch('/api/test-auth', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ sourceTableId: s.value, targetTableId: t.value })
+          body: JSON.stringify({ baseId, personalToken: token })
         });
-        const data = await res.json();
-        log.textContent = data.success ? `✅ 成功复制 ${data.copied} 条` : `❌ ${data.error}`;
-      } catch (e) {
-        log.textContent = `❌ 网络错误：${e.message}`;
+
+        const data = await response.json();
+        if (data.success) {
+          currentToken = token;
+          currentBaseId = baseId;
+          document.getElementById('tableSection').style.display = 'block';
+          log(`✅ 授权成功！可访问 ${data.tableCount} 个表格`);
+        } else {
+          log(`❌ 授权失败: ${data.error}`);
+        }
+      } catch (error) {
+        log(`❌ 测试授权失败: ${error.message}`);
       }
+    }
+
+    // 显示表格选择器
+    async function showTableSelector(type) {
+      if (!currentToken || !currentBaseId) {
+        return log('❗ 请先完成授权测试');
+      }
+
+      log('📋 正在获取表格列表...');
+
+      try {
+        const response = await fetch('/api/tables', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ baseId: currentBaseId, personalToken: currentToken })
+        });
+
+        const data = await response.json();
+        if (data.success) {
+          const tables = data.tables;
+          const tableList = tables.map((t, i) => `${i + 1}. ${t.name} (${t.table_id})`).join('\n');
+          const selected = prompt(`请选择${type === 'source' ? '源' : '目标'}表格:\n\n${tableList}\n\n请输入序号:`);
+
+          if (selected) {
+            const index = parseInt(selected) - 1;
+            if (index >= 0 && index < tables.length) {
+              const targetInput = type === 'source' ? 'sourceTable' : 'targetTable';
+              document.getElementById(targetInput).value = tables[index].table_id;
+              log(`✅ 已选择${type === 'source' ? '源' : '目标'}表格: ${tables[index].name}`);
+            }
+          }
+        } else {
+          log(`❌ 获取表格列表失败: ${data.error}`);
+        }
+      } catch (error) {
+        log(`❌ 网络错误: ${error.message}`);
+      }
+    }
+
+    // 开始复制
+    async function startCopy() {
+      const sourceTable = document.getElementById('sourceTable').value.trim();
+      const targetTable = document.getElementById('targetTable').value.trim();
+
+      if (!sourceTable || !targetTable) {
+        return log('❗ 请先填写源表格和目标表格ID');
+      }
+
+      if (!currentToken || !currentBaseId) {
+        return log('❗ 请先完成授权测试');
+      }
+
+      log('🚀 开始复制数据...');
+
+      try {
+        const response = await fetch('/api/copy', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            sourceTableId: sourceTable,
+            targetTableId: targetTable,
+            baseId: currentBaseId,
+            personalToken: currentToken
+          })
+        });
+
+        const data = await response.json();
+        if (data.success) {
+          log(`✅ 复制完成！成功复制 ${data.copied} 条记录`);
+        } else {
+          log(`❌ 复制失败: ${data.error}`);
+        }
+      } catch (error) {
+        log(`❌ 网络错误: ${error.message}`);
+      }
+    }
+
+    // 日志函数
+    function log(message) {
+      const logElement = document.getElementById('log');
+      const timestamp = new Date().toLocaleTimeString();
+      logElement.textContent += `[${timestamp}] ${message}\n`;
+      logElement.scrollTop = logElement.scrollHeight;
     }
   </script>
 </body>
+
 </html>

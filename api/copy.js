@@ -1,23 +1,46 @@
 const { BaseClient } = require('@lark-base-open/node-sdk');
 
 module.exports = async function handler(req, res) {
-  if (req.method !== 'POST') return res.status(405).end();
+  if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
 
-  const { sourceTableId, targetTableId } = req.body;
-  const baseId = 'KnX9bIOTKaE3trspPCycfFMjnkg';
+  const { sourceTableId, targetTableId, baseId, personalToken } = req.body;
+  
+  if (!sourceTableId || !targetTableId) {
+    return res.status(400).json({ error: '缺少表ID' });
+  }
+
+  if (!baseId || !personalToken) {
+    return res.status(400).json({ error: '缺少BaseId或PersonalBaseToken' });
+  }
+
   const client = new BaseClient({
     appToken: baseId,
-    personalBaseToken: 'pt-bOGOfkA-lYy4LMm3KG06xw28GPVfHleZaNRqmWiYAQAABEBE9RyAClgqPlmY'
+    personalBaseToken: personalToken
   });
 
   try {
+    console.log('开始获取字段信息...', { sourceTableId, targetTableId, baseId });
+    
     // 1. 字段 & 记录（分页）
     const [sf, tf] = await Promise.all([
       client.base.appTableField.list({ path: { table_id: sourceTableId } }),
       client.base.appTableField.list({ path: { table_id: targetTableId } })
     ]);
+    
+    console.log('字段API响应:', { sf: sf?.data, tf: tf?.data });
+    
+    // 检查返回数据结构
+    if (!sf?.data?.items) {
+      throw new Error(`源表格字段获取失败，响应结构异常: ${JSON.stringify(sf)}`);
+    }
+    if (!tf?.data?.items) {
+      throw new Error(`目标表格字段获取失败，响应结构异常: ${JSON.stringify(tf)}`);
+    }
+    
     const sFields = sf.data.items;
     const tFields = tf.data.items;
+    
+    console.log('字段信息:', { sourceFields: sFields.length, targetFields: tFields.length });
 
     const map = new Map(tFields.map(f => [f.field_name, f.field_id]));
     const fieldMap = {};
@@ -46,6 +69,11 @@ module.exports = async function handler(req, res) {
 
     res.json({ success: true, copied: records.length });
   } catch (err) {
-    res.status(500).json({ success: false, error: err.message });
+    console.error('复制操作失败:', err);
+    res.status(500).json({ 
+      success: false, 
+      error: err.message,
+      details: err.stack
+    });
   }
 }
