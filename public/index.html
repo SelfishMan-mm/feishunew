@@ -580,10 +580,11 @@
         const primaryFieldName = fieldsData.fields[0]?.field_name || '主字段';
 
         // 获取表格数据
-        const dataResponse = await fetch('/api/table-data', {
+        const dataResponse = await fetch('/api/data-operations', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ 
+            operation: 'get-table-data',
             baseId: currentBaseId, 
             personalToken: currentToken,
             tableId: sourceTableId
@@ -695,10 +696,11 @@
       log(`🚀 开始复制选中的 ${selectedRecords.length} 条记录...`);
 
       try {
-        const response = await fetch('/api/copy-records', {
+        const response = await fetch('/api/data-operations', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
+            operation: 'copy-records',
             sourceTableId: document.getElementById('sourceTable').value,
             targetTableId: targetTableId,
             baseId: currentBaseId,
