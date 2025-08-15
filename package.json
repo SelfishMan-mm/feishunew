@@ -1,0 +1,8 @@
+{
+  "name": "feishutest",
+  "version": "1.0.0",
+  "type": "commonjs",
+  "dependencies": {
+    "@lark-base-open/node-sdk": "^1.0.1"
+  }
+}
