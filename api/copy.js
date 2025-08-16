@@ -66,30 +66,105 @@ module.exports = async function handler(req, res) {
     } while (pageToken);
 
     // 2. 写入目标表
-    for (const rec of records) {
-      const payload = {};
-      for (const [s, t] of Object.entries(fieldMap)) payload[t] = rec.fields[s];
-      await client.base.appTableRecord.create({
-        path: { table_id: targetTableId },
-        data: { fields: payload }
-      });
+    console.log(`开始写入 ${records.length} 条记录到目标表...`);
+    
+    for (let i = 0; i < records.length; i++) {
+      const rec = records[i];
+      try {
+        const payload = {};
+        for (const [s, t] of Object.entries(fieldMap)) {
+          if (rec.fields[s] !== undefined && rec.fields[s] !== null) {
+            payload[t] = rec.fields[s];
+          }
+        }
+        
+        console.log(`正在写入第 ${i + 1}/${records.length} 条记录...`);
+        
+        const createResult = await client.base.appTableRecord.create({
+          path: { table_id: targetTableId },
+          data: { fields: payload }
+        });
+        
+        console.log(`成功写入记录 ${i + 1}:`, createResult.data?.record?.record_id);
+        
+        // 添加延迟以避免频率限制
+        if (i > 0 && i % 10 === 0) {
+          console.log('暂停1秒以避免频率限制...');
+          await new Promise(resolve => setTimeout(resolve, 1000));
+        }
+        
+      } catch (recordError) {
+        console.error(`写入第 ${i + 1} 条记录失败:`, {
+          error: recordError.message,
+          response: recordError.response?.data,
+          record: rec.record_id,
+          fields: Object.keys(rec.fields)
+        });
+        
+        // 如果是单条记录错误，继续处理下一条
+        if (recordError.response?.data?.sc === 30) {
+          console.log('字段类型不匹配，跳过此记录继续处理...');
+          continue;
+        }
+        
+        // 如果是严重错误，抛出异常
+        throw recordError;
+      }
     }
 
     res.json({ success: true, copied: records.length });
   } catch (err) {
     console.error('复制操作失败:', err);
+    
+    // 解析飞书API错误响应
+    let errorMessage = err.message;
+    let errorDetails = null;
+    
+    if (err.response?.data) {
+      const apiError = err.response.data;
+      errorDetails = apiError;
+      
+      // 解析常见的飞书API错误码
+      if (apiError.code) {
+        switch (apiError.code) {
+          case 1:
+            errorMessage = '参数错误：请检查表格ID和字段映射';
+            break;
+          case 2:
+            errorMessage = '权限不足：请检查PersonalBaseToken权限';
+            break;
+          case 30:
+            errorMessage = '字段操作失败：可能是字段类型不匹配或字段不存在';
+            break;
+          case 1254:
+            errorMessage = '请求频率过高：请稍后再试';
+            break;
+          default:
+            errorMessage = `飞书API错误 (${apiError.code}): ${apiError.msg || '未知错误'}`;
+        }
+      } else if (apiError.sc) {
+        // 处理 {"e":0,"sc":30} 格式的响应
+        switch (apiError.sc) {
+          case 30:
+            errorMessage = '字段写入失败：请检查字段类型匹配和写入权限';
+            break;
+          default:
+            errorMessage = `飞书服务错误 (sc:${apiError.sc})`;
+        }
+      }
+    }
+    
+    console.error('详细错误信息:', {
+      originalError: err.message,
+      apiResponse: errorDetails,
+      stack: err.stack
+    });
+    
     res.status(500).json({ 
       success: false, 
-      error: err.message,
-      details: err.stack
+      error: errorMessage,
+      details: errorDetails,
+      timestamp: new Date().toISOString()
     });
   }
 }
-console.log('写入字段:', transformedFields);
-await client.base.appTableRecord.create({
-  path: { table_id: targetTableId },
-  data: { fields: transformedFields }
-}).catch(err => {
-  console.error('写入失败字段:', transformedFields, err.message);
-  throw err;   // 继续抛出去让前端看到
-});

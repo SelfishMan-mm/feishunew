@@ -107,26 +107,58 @@ async function copyRecords(req, res) {
     // 复制记录
     let successCount = 0;
     let errorCount = 0;
+    const errorDetails = [];
 
-    for (const record of records) {
+    console.log(`开始复制 ${records.length} 条记录...`);
+
+    for (let i = 0; i < records.length; i++) {
+      const record = records[i];
       try {
         const transformedFields = {};
         
         Object.entries(fieldMapping).forEach(([sourceFieldId, targetFieldId]) => {
-          if (record.fields[sourceFieldId] !== undefined) {
+          if (record.fields[sourceFieldId] !== undefined && record.fields[sourceFieldId] !== null) {
             transformedFields[targetFieldId] = record.fields[sourceFieldId];
           }
         });
 
         if (Object.keys(transformedFields).length > 0) {
+          console.log(`正在复制第 ${i + 1}/${records.length} 条记录...`);
+          
           await client.base.appTableRecord.create({
             path: { table_id: targetTableId },
             data: { fields: transformedFields }
           });
           successCount++;
+          
+          // 添加延迟以避免频率限制
+          if (i > 0 && i % 5 === 0) {
+            await new Promise(resolve => setTimeout(resolve, 500));
+          }
         }
       } catch (error) {
         errorCount++;
+        const errorInfo = {
+          recordIndex: i + 1,
+          recordId: record.record_id,
+          error: error.message,
+          apiResponse: error.response?.data
+        };
+        
+        console.error(`复制第 ${i + 1} 条记录失败:`, errorInfo);
+        errorDetails.push(errorInfo);
+        
+        // 如果是字段类型错误，继续处理下一条
+        if (error.response?.data?.sc === 30 || error.response?.data?.code === 30) {
+          console.log('字段类型不匹配，跳过此记录继续处理...');
+          continue;
+        }
+        
+        // 如果错误太多，停止处理
+        if (errorCount > 10) {
+          console.log('错误数量过多，停止处理...');
+          break;
+        }
       }
     }
 
@@ -134,14 +166,30 @@ async function copyRecords(req, res) {
       success: true,
       copied: successCount,
       errors: errorCount,
-      total: records.length
+      total: records.length,
+      errorDetails: errorDetails.slice(0, 5), // 只返回前5个错误详情
+      message: `成功复制 ${successCount}/${records.length} 条记录${errorCount > 0 ? `，${errorCount} 条失败` : ''}`
     });
 
   } catch (error) {
     console.error('复制记录失败:', error);
+    
+    // 解析飞书API错误
+    let errorMessage = error.message;
+    if (error.response?.data) {
+      const apiError = error.response.data;
+      if (apiError.sc === 30) {
+        errorMessage = '字段操作失败：请检查字段类型匹配和目标表权限';
+      } else if (apiError.code) {
+        errorMessage = `飞书API错误 (${apiError.code}): ${apiError.msg || '未知错误'}`;
+      }
+    }
+    
     res.status(500).json({
       success: false,
-      error: error.message || '复制记录失败'
+      error: errorMessage,
+      details: error.response?.data,
+      timestamp: new Date().toISOString()
     });
   }
 }

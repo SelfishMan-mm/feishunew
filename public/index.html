@@ -245,6 +245,34 @@
       transform: none;
     }
 
+    .debug-btn {
+      background: #f39c12;
+      color: white;
+      border: none;
+      padding: 12px 32px;
+      border-radius: 6px;
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      box-shadow: 0 2px 8px rgba(243, 156, 18, 0.2);
+      margin-bottom: 12px;
+      width: 100%;
+    }
+
+    .debug-btn:hover:not(:disabled) {
+      background: #e67e22;
+      transform: translateY(-1px);
+      box-shadow: 0 4px 12px rgba(243, 156, 18, 0.3);
+    }
+
+    .debug-btn:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+      transform: none;
+      box-shadow: none;
+    }
+
     /* 进度监控 */
     .progress-section {
       background: #f8fafc;
@@ -527,6 +555,7 @@
 
       <!-- 开始复制按钮 -->
       <div class="action-section">
+        <button class="debug-btn" onclick="debugFields()" id="debugBtn" disabled style="background: #f39c12; margin-bottom: 12px;">🔍 调试字段匹配</button>
         <button class="start-btn" onclick="startCopy()" id="startBtn" disabled>开始复制</button>
       </div>
 
@@ -686,10 +715,13 @@
     // 更新开始按钮状态
     function updateStartButton() {
       const startBtn = document.getElementById('startBtn');
+      const debugBtn = document.getElementById('debugBtn');
       const sourceTable = document.getElementById('sourceTable').value;
       const targetTable = document.getElementById('targetTable').value;
 
-      startBtn.disabled = !isAuthorized || !sourceTable || !targetTable;
+      const canOperate = isAuthorized && sourceTable && targetTable;
+      startBtn.disabled = !canOperate;
+      debugBtn.disabled = !canOperate;
     }
 
     // 开始复制
@@ -884,14 +916,128 @@
       progressSpeed.textContent = `速度: ${speed}/s`;
     }
 
-    // 获取复制方式文本
-    function getCopyMethodText(method) {
-      const texts = {
-        'all': '整表复制',
-        'field': '字段匹配复制',
-        'selected': '指定行复制'
+    // 调试字段匹配
+    async function debugFields() {
+      const sourceTableId = document.getElementById('sourceTable').value;
+      const targetTableId = document.getElementById('targetTable').value;
+
+      if (!sourceTableId || !targetTableId) {
+        return log('❗ 请先选择源表格和目标表格');
+      }
+
+      if (!isAuthorized) {
+        return log('❗ 请先完成授权');
+      }
+
+      log('🔍 开始调试字段匹配...');
+
+      try {
+        const response = await fetch('/api/debug-fields', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            sourceTableId: sourceTableId,
+            targetTableId: targetTableId,
+            baseId: currentBaseId,
+            personalToken: currentToken
+          })
+        });
+
+        const data = await response.json();
+        
+        if (data.success) {
+          displayDebugResults(data.analysis, data.sampleData, data.recommendations);
+        } else {
+          log(`❌ 调试失败: ${data.error}`);
+          if (data.apiResponse) {
+            log(`API响应: ${JSON.stringify(data.apiResponse, null, 2)}`);
+          }
+        }
+
+      } catch (error) {
+        log(`❌ 调试网络错误: ${error.message}`);
+      }
+    }
+
+    // 显示调试结果
+    function displayDebugResults(analysis, sampleData, recommendations) {
+      log('📊 === 字段匹配调试结果 ===');
+      
+      // 显示匹配统计
+      log(`✅ 成功匹配字段: ${analysis.matchedFields.length} 个`);
+      log(`⚠️  源表未匹配字段: ${analysis.unmatchedSource.length} 个`);
+      log(`⚠️  目标表未匹配字段: ${analysis.unmatchedTarget.length} 个`);
+      log(`❌ 类型冲突字段: ${analysis.typeConflicts.length} 个`);
+      
+      log('');
+      
+      // 显示匹配的字段详情
+      if (analysis.matchedFields.length > 0) {
+        log('📋 匹配的字段列表:');
+        analysis.matchedFields.forEach(field => {
+          const status = field.typeCompatible ? '✅' : '❌';
+          log(`  ${status} ${field.sourceName} (${getFieldTypeName(field.sourceType)} -> ${getFieldTypeName(field.targetType)})`);
+        });
+        log('');
+      }
+      
+      // 显示类型冲突
+      if (analysis.typeConflicts.length > 0) {
+        log('❌ 类型冲突字段（这些可能导致复制失败）:');
+        analysis.typeConflicts.forEach(conflict => {
+          log(`  ${conflict.fieldName}: ${getFieldTypeName(conflict.sourceType)} -> ${getFieldTypeName(conflict.targetType)}`);
+        });
+        log('');
+      }
+      
+      // 显示建议
+      if (recommendations.length > 0) {
+        log('💡 建议:');
+        recommendations.forEach(rec => {
+          const icon = rec.type === 'error' ? '❌' : '⚠️';
+          log(`  ${icon} ${rec.message}`);
+          if (rec.details) {
+            log(`     详情: ${Array.isArray(rec.details) ? rec.details.join(', ') : JSON.stringify(rec.details)}`);
+          }
+        });
+        log('');
+      }
+      
+      // 显示数据样本
+      if (sampleData && sampleData.length > 0) {
+        log('📄 数据样本预览:');
+        sampleData.forEach((record, index) => {
+          log(`  记录 ${index + 1} (${record.recordId}):`);
+          record.fields.slice(0, 3).forEach(field => {
+            log(`    ${field.fieldName}: ${field.value} (${field.valueType})`);
+          });
+          if (record.fields.length > 3) {
+            log(`    ... 还有 ${record.fields.length - 3} 个字段`);
+          }
+        });
+      }
+      
+      log('=========================');
+    }
+
+    // 获取字段类型名称
+    function getFieldTypeName(type) {
+      const typeNames = {
+        1: '文本',
+        2: '数字', 
+        3: '单选',
+        4: '多选',
+        5: '日期时间',
+        7: '复选框',
+        11: '人员',
+        13: '电话号码',
+        15: '超链接',
+        17: '附件',
+        19: '关联',
+        20: '公式',
+        21: '双向关联'
       };
-      return texts[method] || method;
+      return typeNames[type] || `未知类型(${type})`;
     }
 
     // 获取映射方式文本
