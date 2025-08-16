@@ -98,8 +98,8 @@ async function copyRecords(req, res) {
       sourceFields.data.items.forEach(sourceField => {
         const targetFieldId = targetFieldMap.get(sourceField.field_name);
         if (targetFieldId) {
-          // 🔧 修复：使用字段名称作为key，这样能匹配源记录的数据结构
-          fieldMapping[sourceField.field_name] = targetFieldId;
+          // ✅ 参考项目的正确逻辑：源字段ID -> 目标字段ID
+          fieldMapping[sourceField.field_id] = targetFieldId;
         }
       });
       console.log('✅ 使用自动字段映射:', Object.keys(fieldMapping).length, '个字段');
@@ -117,9 +117,9 @@ async function copyRecords(req, res) {
       try {
         const transformedFields = {};
         
-        Object.entries(fieldMapping).forEach(([sourceFieldName, targetFieldId]) => {
-          if (record.fields[sourceFieldName] !== undefined && record.fields[sourceFieldName] !== null) {
-            transformedFields[targetFieldId] = record.fields[sourceFieldName];
+        Object.entries(fieldMapping).forEach(([sourceFieldId, targetFieldId]) => {
+          if (record.fields[sourceFieldId] !== undefined && record.fields[sourceFieldId] !== null) {
+            transformedFields[targetFieldId] = record.fields[sourceFieldId];
           }
         });
 

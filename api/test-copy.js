@@ -36,8 +36,8 @@ module.exports = async function handler(req, res) {
     sourceFields.forEach(sf => {
       const targetFieldId = targetFieldMap.get(sf.field_name);
       if (targetFieldId) {
-        // 🔧 修复：使用字段名称作为key，匹配源记录的数据结构
-        fieldMapping[sf.field_name] = targetFieldId;
+        // ✅ 参考项目的正确逻辑：源字段ID -> 目标字段ID
+        fieldMapping[sf.field_id] = targetFieldId;
       }
     });
     
@@ -62,32 +62,38 @@ module.exports = async function handler(req, res) {
     const targetData = {};
     let transferredCount = 0;
     
-    Object.entries(fieldMapping).forEach(([sourceFieldName, targetFieldId]) => {
-      console.log(`检查字段映射: ${sourceFieldName} -> ${targetFieldId}`);
-      console.log(`源记录中是否存在 ${sourceFieldName}:`, sourceRecord.fields.hasOwnProperty(sourceFieldName));
-      console.log(`源记录中的值:`, sourceRecord.fields[sourceFieldName]);
+    Object.entries(fieldMapping).forEach(([sourceFieldId, targetFieldId]) => {
+      console.log(`检查字段映射: ${sourceFieldId} -> ${targetFieldId}`);
+      console.log(`源记录中是否存在 ${sourceFieldId}:`, sourceRecord.fields.hasOwnProperty(sourceFieldId));
+      console.log(`源记录中的值:`, sourceRecord.fields[sourceFieldId]);
       
-      if (sourceRecord.fields.hasOwnProperty(sourceFieldName) && 
-          sourceRecord.fields[sourceFieldName] !== undefined && 
-          sourceRecord.fields[sourceFieldName] !== null) {
-        targetData[targetFieldId] = sourceRecord.fields[sourceFieldName];
+      if (sourceRecord.fields.hasOwnProperty(sourceFieldId) && 
+          sourceRecord.fields[sourceFieldId] !== undefined && 
+          sourceRecord.fields[sourceFieldId] !== null) {
+        targetData[targetFieldId] = sourceRecord.fields[sourceFieldId];
         transferredCount++;
-        console.log(`✅ 成功映射字段 ${sourceFieldName} -> ${targetFieldId}: ${sourceRecord.fields[sourceFieldName]}`);
+        console.log(`✅ 成功映射字段 ${sourceFieldId} -> ${targetFieldId}: ${sourceRecord.fields[sourceFieldId]}`);
       } else {
-        console.log(`⚠️ 字段 ${sourceFieldName} 在源记录中不存在或为空`);
+        console.log(`⚠️ 字段 ${sourceFieldId} 在源记录中不存在或为空`);
       }
     });
     
     console.log(`总共传输了 ${transferredCount} 个字段的数据`);
     console.log('目标记录数据:', JSON.stringify(targetData, null, 2));
 
-    // 5. 创建记录
+    // 5. 创建记录（改进API调用方式）
+    console.log('准备创建记录，数据:', JSON.stringify(targetData, null, 2));
+    
     const createResult = await client.base.appTableRecord.create({
       path: { table_id: targetTableId },
-      data: { fields: targetData }
+      data: { 
+        fields: targetData,
+        // 🔧 添加可能需要的额外参数
+        user_id_type: "user_id"
+      }
     });
 
-    console.log('创建结果:', JSON.stringify(createResult, null, 2));
+    console.log('创建API完整响应:', JSON.stringify(createResult, null, 2));
 
     // 安全获取目标记录ID
     const targetRecordId = createResult?.data?.record?.record_id || 

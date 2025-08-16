@@ -58,8 +58,8 @@ module.exports = async function handler(req, res) {
       sFields.forEach(f => { 
         const id = map.get(f.field_name); 
         if (id) {
-          // 🔧 修复：使用字段名称作为key，匹配源记录的数据结构
-          fieldMap[f.field_name] = id;
+          // ✅ 参考项目的正确逻辑：源字段ID -> 目标字段ID
+          fieldMap[f.field_id] = id;
           console.log(`字段映射: ${f.field_name} (${f.field_id}) -> (${id})`);
         } else {
           console.warn(`未找到匹配的目标字段: ${f.field_name}`);
@@ -100,19 +100,19 @@ module.exports = async function handler(req, res) {
         console.log('字段映射表:', fieldMap);
         
         // 构建要写入的数据，只包含映射成功的字段
-        for (const [sourceFieldName, targetFieldId] of Object.entries(fieldMap)) {
-          console.log(`检查映射: ${sourceFieldName} -> ${targetFieldId}`);
-          console.log(`源记录中是否存在: ${rec.fields.hasOwnProperty(sourceFieldName)}`);
-          console.log(`值: ${rec.fields[sourceFieldName]}`);
+        for (const [sourceFieldId, targetFieldId] of Object.entries(fieldMap)) {
+          console.log(`检查映射: ${sourceFieldId} -> ${targetFieldId}`);
+          console.log(`源记录中是否存在: ${rec.fields.hasOwnProperty(sourceFieldId)}`);
+          console.log(`值: ${rec.fields[sourceFieldId]}`);
           
-          if (rec.fields.hasOwnProperty(sourceFieldName) && 
-              rec.fields[sourceFieldName] !== undefined && 
-              rec.fields[sourceFieldName] !== null) {
-            payload[targetFieldId] = rec.fields[sourceFieldName];
+          if (rec.fields.hasOwnProperty(sourceFieldId) && 
+              rec.fields[sourceFieldId] !== undefined && 
+              rec.fields[sourceFieldId] !== null) {
+            payload[targetFieldId] = rec.fields[sourceFieldId];
             mappedFieldCount++;
-            console.log(`✅ 成功映射: ${sourceFieldName} -> ${targetFieldId} = ${rec.fields[sourceFieldName]}`);
+            console.log(`✅ 成功映射: ${sourceFieldId} -> ${targetFieldId} = ${rec.fields[sourceFieldId]}`);
           } else {
-            console.log(`⚠️ 跳过字段: ${sourceFieldName} (不存在或为空)`);
+            console.log(`⚠️ 跳过字段: ${sourceFieldId} (不存在或为空)`);
           }
         }
         
@@ -128,10 +128,23 @@ module.exports = async function handler(req, res) {
         
         const createResult = await client.base.appTableRecord.create({
           path: { table_id: targetTableId },
-          data: { fields: payload }
+          data: { 
+            fields: payload,
+            // 🔧 参考其他项目，添加用户类型参数
+            user_id_type: "user_id"
+          }
         });
         
-        console.log(`成功写入记录 ${i + 1}:`, createResult.data?.record?.record_id);
+        const newRecordId = createResult?.data?.record?.record_id || 
+                           createResult?.data?.record_id || 
+                           '未知';
+        
+        console.log(`✅ 成功写入记录 ${i + 1}: ${newRecordId}`);
+        console.log('API响应详情:', JSON.stringify({
+          success: !!createResult?.data,
+          recordCreated: !!newRecordId && newRecordId !== '未知',
+          responseStructure: createResult?.data ? Object.keys(createResult.data) : []
+        }, null, 2));
         
         // 添加延迟以避免频率限制
         if (i > 0 && i % 10 === 0) {
