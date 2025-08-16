@@ -29,14 +29,15 @@ module.exports = async function handler(req, res) {
     console.log('源表字段:', sourceFields.map(f => `${f.field_name}(${f.field_id})`));
     console.log('目标表字段:', targetFields.map(f => `${f.field_name}(${f.field_id})`));
 
-    // 2. 建立字段映射
+    // 2. 建立字段映射（字段名称 -> 目标字段ID）
     const fieldMapping = {};
     const targetFieldMap = new Map(targetFields.map(f => [f.field_name, f.field_id]));
     
     sourceFields.forEach(sf => {
       const targetFieldId = targetFieldMap.get(sf.field_name);
       if (targetFieldId) {
-        fieldMapping[sf.field_id] = targetFieldId;
+        // 🔧 修复：使用字段名称作为key，匹配源记录的数据结构
+        fieldMapping[sf.field_name] = targetFieldId;
       }
     });
     
@@ -61,19 +62,19 @@ module.exports = async function handler(req, res) {
     const targetData = {};
     let transferredCount = 0;
     
-    Object.entries(fieldMapping).forEach(([sourceFieldId, targetFieldId]) => {
-      console.log(`检查字段映射: ${sourceFieldId} -> ${targetFieldId}`);
-      console.log(`源记录中是否存在 ${sourceFieldId}:`, sourceRecord.fields.hasOwnProperty(sourceFieldId));
-      console.log(`源记录中的值:`, sourceRecord.fields[sourceFieldId]);
+    Object.entries(fieldMapping).forEach(([sourceFieldName, targetFieldId]) => {
+      console.log(`检查字段映射: ${sourceFieldName} -> ${targetFieldId}`);
+      console.log(`源记录中是否存在 ${sourceFieldName}:`, sourceRecord.fields.hasOwnProperty(sourceFieldName));
+      console.log(`源记录中的值:`, sourceRecord.fields[sourceFieldName]);
       
-      if (sourceRecord.fields.hasOwnProperty(sourceFieldId) && 
-          sourceRecord.fields[sourceFieldId] !== undefined && 
-          sourceRecord.fields[sourceFieldId] !== null) {
-        targetData[targetFieldId] = sourceRecord.fields[sourceFieldId];
+      if (sourceRecord.fields.hasOwnProperty(sourceFieldName) && 
+          sourceRecord.fields[sourceFieldName] !== undefined && 
+          sourceRecord.fields[sourceFieldName] !== null) {
+        targetData[targetFieldId] = sourceRecord.fields[sourceFieldName];
         transferredCount++;
-        console.log(`✅ 成功映射字段 ${sourceFieldId} -> ${targetFieldId}: ${sourceRecord.fields[sourceFieldId]}`);
+        console.log(`✅ 成功映射字段 ${sourceFieldName} -> ${targetFieldId}: ${sourceRecord.fields[sourceFieldName]}`);
       } else {
-        console.log(`⚠️ 字段 ${sourceFieldId} 在源记录中不存在或为空`);
+        console.log(`⚠️ 字段 ${sourceFieldName} 在源记录中不存在或为空`);
       }
     });
     

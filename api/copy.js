@@ -58,7 +58,8 @@ module.exports = async function handler(req, res) {
       sFields.forEach(f => { 
         const id = map.get(f.field_name); 
         if (id) {
-          fieldMap[f.field_id] = id;
+          // 🔧 修复：使用字段名称作为key，匹配源记录的数据结构
+          fieldMap[f.field_name] = id;
           console.log(`字段映射: ${f.field_name} (${f.field_id}) -> (${id})`);
         } else {
           console.warn(`未找到匹配的目标字段: ${f.field_name}`);
@@ -99,19 +100,19 @@ module.exports = async function handler(req, res) {
         console.log('字段映射表:', fieldMap);
         
         // 构建要写入的数据，只包含映射成功的字段
-        for (const [sourceFieldId, targetFieldId] of Object.entries(fieldMap)) {
-          console.log(`检查映射: ${sourceFieldId} -> ${targetFieldId}`);
-          console.log(`源记录中是否存在: ${rec.fields.hasOwnProperty(sourceFieldId)}`);
-          console.log(`值: ${rec.fields[sourceFieldId]}`);
+        for (const [sourceFieldName, targetFieldId] of Object.entries(fieldMap)) {
+          console.log(`检查映射: ${sourceFieldName} -> ${targetFieldId}`);
+          console.log(`源记录中是否存在: ${rec.fields.hasOwnProperty(sourceFieldName)}`);
+          console.log(`值: ${rec.fields[sourceFieldName]}`);
           
-          if (rec.fields.hasOwnProperty(sourceFieldId) && 
-              rec.fields[sourceFieldId] !== undefined && 
-              rec.fields[sourceFieldId] !== null) {
-            payload[targetFieldId] = rec.fields[sourceFieldId];
+          if (rec.fields.hasOwnProperty(sourceFieldName) && 
+              rec.fields[sourceFieldName] !== undefined && 
+              rec.fields[sourceFieldName] !== null) {
+            payload[targetFieldId] = rec.fields[sourceFieldName];
             mappedFieldCount++;
-            console.log(`✅ 成功映射: ${sourceFieldId} -> ${targetFieldId} = ${rec.fields[sourceFieldId]}`);
+            console.log(`✅ 成功映射: ${sourceFieldName} -> ${targetFieldId} = ${rec.fields[sourceFieldName]}`);
           } else {
-            console.log(`⚠️ 跳过字段: ${sourceFieldId} (不存在或为空)`);
+            console.log(`⚠️ 跳过字段: ${sourceFieldName} (不存在或为空)`);
           }
         }
         
