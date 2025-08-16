@@ -22,17 +22,26 @@ module.exports = async function handler(req, res) {
     console.log('开始获取字段信息...', { sourceTableId, targetTableId, baseId });
     
     let fieldMap = {};
+    let tFields = []; // 🔧 确保目标字段信息总是可用
+
+    // 🔧 无论使用哪种映射方式，都需要获取目标字段信息用于类型转换
+    const tf = await client.base.appTableField.list({ path: { table_id: targetTableId } });
+    
+    if (!tf?.data?.items) {
+      console.error('目标表格字段API完整响应:', JSON.stringify(tf, null, 2));
+      throw new Error(`目标表格字段获取失败，响应结构异常: ${JSON.stringify(tf)}`);
+    }
+    
+    tFields = tf.data.items;
+    console.log('目标表字段详情:', tFields.map(f => ({ id: f.field_id, name: f.field_name, type: f.type })));
 
     // ✅ 优先使用自定义字段映射
     if (customFieldMapping && Object.keys(customFieldMapping).length > 0) {
       fieldMap = customFieldMapping;
       console.log('✅ 整表复制使用自定义字段映射:', Object.keys(fieldMap).length, '个字段');
     } else {
-      // 1. 字段 & 记录（分页）
-      const [sf, tf] = await Promise.all([
-        client.base.appTableField.list({ path: { table_id: sourceTableId } }),
-        client.base.appTableField.list({ path: { table_id: targetTableId } })
-      ]);
+      // 获取源表字段信息进行自动映射
+      const sf = await client.base.appTableField.list({ path: { table_id: sourceTableId } });
       
       console.log('字段API响应:', { sf: sf?.data, tf: tf?.data });
       
@@ -41,17 +50,10 @@ module.exports = async function handler(req, res) {
         console.error('源表格字段API完整响应:', JSON.stringify(sf, null, 2));
         throw new Error(`源表格字段获取失败，响应结构异常: ${JSON.stringify(sf)}`);
       }
-      if (!tf?.data?.items) {
-        console.error('目标表格字段API完整响应:', JSON.stringify(tf, null, 2));
-        throw new Error(`目标表格字段获取失败，响应结构异常: ${JSON.stringify(tf)}`);
-      }
       
       const sFields = sf.data.items;
-      const tFields = tf.data.items;
       
       console.log('源表字段详情:', sFields.map(f => ({ id: f.field_id, name: f.field_name, type: f.type })));
-      console.log('目标表字段详情:', tFields.map(f => ({ id: f.field_id, name: f.field_name, type: f.type })));
-      
       console.log('字段信息:', { sourceFields: sFields.length, targetFields: tFields.length });
 
       const map = new Map(tFields.map(f => [f.field_name, f.field_id]));
