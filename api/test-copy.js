@@ -58,21 +58,68 @@ module.exports = async function handler(req, res) {
     console.log('源记录字段keys:', Object.keys(sourceRecord.fields));
     console.log('预期的源字段IDs:', sourceFields.map(f => f.field_id));
 
-    // 4. 构建目标记录数据
+    // 4. 构建目标记录数据（根据目标字段类型转换）
     const targetData = {};
     let transferredCount = 0;
     
     Object.entries(fieldMapping).forEach(([sourceFieldId, targetFieldId]) => {
       console.log(`检查字段映射: ${sourceFieldId} -> ${targetFieldId}`);
       console.log(`源记录中是否存在 ${sourceFieldId}:`, sourceRecord.fields.hasOwnProperty(sourceFieldId));
-      console.log(`源记录中的值:`, sourceRecord.fields[sourceFieldId]);
+      console.log(`源记录中的原始值:`, sourceRecord.fields[sourceFieldId]);
       
       if (sourceRecord.fields.hasOwnProperty(sourceFieldId) && 
           sourceRecord.fields[sourceFieldId] !== undefined && 
           sourceRecord.fields[sourceFieldId] !== null) {
-        targetData[targetFieldId] = sourceRecord.fields[sourceFieldId];
+        
+        let rawValue = sourceRecord.fields[sourceFieldId];
+        
+        // 🔧 根据目标字段类型进行数据转换
+        const targetField = tFields.find(f => f.field_id === targetFieldId);
+        if (!targetField) {
+          console.log(`⚠️ 未找到目标字段信息: ${targetFieldId}`);
+          return;
+        }
+        
+        let convertedValue;
+        console.log(`目标字段类型: ${targetField.type} (${targetField.field_name})`);
+        
+        switch (targetField.type) {
+          case 1: // 文本字段
+            convertedValue = String(rawValue);
+            console.log(`🔄 文本转换: ${rawValue} -> "${convertedValue}"`);
+            break;
+          case 2: // 数字字段  
+            convertedValue = Number(rawValue);
+            if (isNaN(convertedValue)) {
+              console.log(`⚠️ 数字转换失败: ${rawValue} 不是有效数字，跳过`);
+              return;
+            }
+            console.log(`🔄 数字转换: ${rawValue} -> ${convertedValue}`);
+            break;
+          case 3: // 单选字段
+            convertedValue = String(rawValue);
+            console.log(`🔄 单选转换: ${rawValue} -> "${convertedValue}"`);
+            break;
+          case 4: // 多选字段
+            if (Array.isArray(rawValue)) {
+              convertedValue = rawValue.map(v => String(v));
+            } else {
+              convertedValue = [String(rawValue)];
+            }
+            console.log(`🔄 多选转换: ${JSON.stringify(rawValue)} -> ${JSON.stringify(convertedValue)}`);
+            break;
+          case 5: // 日期字段
+            convertedValue = rawValue; // 保持原格式
+            console.log(`🔄 日期保持: ${rawValue}`);
+            break;
+          default: // 其他类型保持原样
+            convertedValue = rawValue;
+            console.log(`🔄 默认保持: ${rawValue} (类型: ${targetField.type})`);
+        }
+        
+        targetData[targetFieldId] = convertedValue;
         transferredCount++;
-        console.log(`✅ 成功映射字段 ${sourceFieldId} -> ${targetFieldId}: ${sourceRecord.fields[sourceFieldId]}`);
+        console.log(`✅ 成功映射字段 ${sourceFieldId} -> ${targetFieldId}: ${JSON.stringify(convertedValue)} (类型: ${targetField.type})`);
       } else {
         console.log(`⚠️ 字段 ${sourceFieldId} 在源记录中不存在或为空`);
       }
