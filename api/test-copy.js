@@ -81,16 +81,22 @@ module.exports = async function handler(req, res) {
     console.log(`总共传输了 ${transferredCount} 个字段的数据`);
     console.log('目标记录数据:', JSON.stringify(targetData, null, 2));
 
-    // 5. 创建记录（改进API调用方式）
+    // 5. 创建记录（使用飞书官方标准格式）
     console.log('准备创建记录，数据:', JSON.stringify(targetData, null, 2));
+    
+    // 🔧 数据验证：确保格式正确
+    const validatedData = {};
+    for (const [fieldId, value] of Object.entries(targetData)) {
+      if (value !== null && value !== undefined && value !== '') {
+        validatedData[fieldId] = value;
+      }
+    }
+    
+    console.log('验证后的数据:', JSON.stringify(validatedData, null, 2));
     
     const createResult = await client.base.appTableRecord.create({
       path: { table_id: targetTableId },
-      data: { 
-        fields: targetData,
-        // 🔧 添加可能需要的额外参数
-        user_id_type: "user_id"
-      }
+      data: { fields: validatedData }
     });
 
     console.log('创建API完整响应:', JSON.stringify(createResult, null, 2));

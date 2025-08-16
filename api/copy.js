@@ -126,13 +126,25 @@ module.exports = async function handler(req, res) {
         
         console.log(`正在写入第 ${i + 1}/${records.length} 条记录...`);
         
+        // 🔧 数据验证：确保payload格式正确
+        const validatedPayload = {};
+        for (const [fieldId, value] of Object.entries(payload)) {
+          // 跳过null、undefined或空字符串
+          if (value !== null && value !== undefined && value !== '') {
+            validatedPayload[fieldId] = value;
+          }
+        }
+        
+        if (Object.keys(validatedPayload).length === 0) {
+          console.warn(`第 ${i + 1} 条记录没有有效数据，跳过`);
+          continue;
+        }
+        
+        console.log('验证后的payload:', JSON.stringify(validatedPayload, null, 2));
+        
         const createResult = await client.base.appTableRecord.create({
           path: { table_id: targetTableId },
-          data: { 
-            fields: payload,
-            // 🔧 参考其他项目，添加用户类型参数
-            user_id_type: "user_id"
-          }
+          data: { fields: validatedPayload }
         });
         
         const newRecordId = createResult?.data?.record?.record_id || 
