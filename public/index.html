@@ -728,8 +728,6 @@
     async function startCopy() {
       const sourceTableId = document.getElementById('sourceTable').value;
       const targetTableId = document.getElementById('targetTable').value;
-      const copyMethod = document.querySelector('input[name="copyMethod"]:checked').value;
-      const mappingMethod = document.querySelector('input[name="mappingMethod"]:checked').value;
 
       if (!sourceTableId || !targetTableId) {
         return log('❗ 请先选择源表格和目标表格');
@@ -747,155 +745,36 @@
       document.getElementById('startBtn').disabled = true;
 
       try {
-        log(`🚀 开始复制 - 方式: ${getCopyMethodText(copyMethod)}, 字段匹配: ${getMappingMethodText(mappingMethod)}`);
+        log('🚀 开始整表复制...');
+        updateProgress(0, 0, 0, '正在复制数据...');
 
-        // 根据复制方式执行不同逻辑
-        switch (copyMethod) {
-          case 'all':
-            await executeFullTableCopy(sourceTableId, targetTableId, mappingMethod);
-            break;
-          case 'field':
-            await executeFieldMatchCopy(sourceTableId, targetTableId, mappingMethod);
-            break;
-          case 'selected':
-            await executeSelectedRowsCopy(sourceTableId, targetTableId, mappingMethod);
-            break;
+        const response = await fetch('/api/copy', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            sourceTableId: sourceTableId,
+            targetTableId: targetTableId,
+            baseId: currentBaseId,
+            personalToken: currentToken
+          })
+        });
+
+        const data = await response.json();
+        
+        if (data.success) {
+          updateProgress(data.copied, data.copied, 0, '复制完成');
+          log(`✅ 复制成功！共复制 ${data.copied} 条记录`);
+        } else {
+          throw new Error(data.error || '复制失败');
         }
 
       } catch (error) {
+        console.error('复制错误:', error);
         log(`❌ 复制失败: ${error.message}`);
         updateProgress(0, 0, 0, '复制失败');
       } finally {
         // 重新启用开始按钮
         document.getElementById('startBtn').disabled = false;
-      }
-    }
-
-    // 执行整表复制
-    async function executeFullTableCopy(sourceTableId, targetTableId, mappingMethod) {
-      updateProgress(0, 0, 0, '正在获取源表数据...');
-
-      try {
-        // 获取源表数据
-        const dataResponse = await fetch('/api/data-operations', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            operation: 'get-table-data',
-            baseId: currentBaseId,
-            personalToken: currentToken,
-            tableId: sourceTableId
-          })
-        });
-
-        const tableData = await dataResponse.json();
-        if (!tableData.success) {
-          throw new Error('获取源表数据失败');
-        }
-
-        const records = tableData.records;
-        updateProgress(0, records.length, 0, `准备复制 ${records.length} 条记录...`);
-
-        // 准备字段映射
-        let fieldMapping = {};
-        if (mappingMethod === 'auto') {
-          fieldMapping = await getAutoFieldMapping(sourceTableId, targetTableId);
-        } else {
-          // 手动映射逻辑（暂时使用自动映射）
-          fieldMapping = await getAutoFieldMapping(sourceTableId, targetTableId);
-        }
-
-        log(`✅ 字段映射完成，映射 ${Object.keys(fieldMapping).length} 个字段`);
-
-        // 执行复制
-        const copyResponse = await fetch('/api/copy', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            sourceTableId,
-            targetTableId,
-            baseId: currentBaseId,
-            personalToken: currentToken,
-            customFieldMapping: fieldMapping
-          })
-        });
-
-        const copyResult = await copyResponse.json();
-        if (copyResult.success) {
-          updateProgress(copyResult.copied, copyResult.copied, copyResult.copied, '复制完成！');
-          log(`✅ 整表复制完成！成功复制 ${copyResult.copied} 条记录`);
-        } else {
-          throw new Error(copyResult.error || '复制失败');
-        }
-
-      } catch (error) {
-        throw error;
-      }
-    }
-
-    // 执行字段匹配复制
-    async function executeFieldMatchCopy(sourceTableId, targetTableId, mappingMethod) {
-      // 与整表复制逻辑相同，但可以添加更多字段匹配的特殊处理
-      await executeFullTableCopy(sourceTableId, targetTableId, mappingMethod);
-    }
-
-    // 执行选定行复制
-    async function executeSelectedRowsCopy(sourceTableId, targetTableId, mappingMethod) {
-      updateProgress(0, 0, 0, '该功能正在开发中...');
-      log('⚠️ 指定行复制功能正在开发中，请使用整表复制');
-
-      // 暂时回退到整表复制
-      await executeFullTableCopy(sourceTableId, targetTableId, mappingMethod);
-    }
-
-    // 获取自动字段映射
-    async function getAutoFieldMapping(sourceTableId, targetTableId) {
-      try {
-        const [sourceResponse, targetResponse] = await Promise.all([
-          fetch('/api/fields', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              baseId: currentBaseId,
-              personalToken: currentToken,
-              tableId: sourceTableId
-            })
-          }),
-          fetch('/api/fields', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              baseId: currentBaseId,
-              personalToken: currentToken,
-              tableId: targetTableId
-            })
-          })
-        ]);
-
-        const [sourceData, targetData] = await Promise.all([
-          sourceResponse.json(),
-          targetResponse.json()
-        ]);
-
-        if (!sourceData.success || !targetData.success) {
-          throw new Error('获取字段信息失败');
-        }
-
-        const sourceFields = sourceData.fields;
-        const targetFields = targetData.fields;
-        const targetFieldMap = new Map(targetFields.map(f => [f.field_name.toLowerCase(), f.field_id]));
-        const fieldMapping = {};
-
-        sourceFields.forEach(sourceField => {
-          const targetFieldId = targetFieldMap.get(sourceField.field_name.toLowerCase());
-          if (targetFieldId) {
-            fieldMapping[sourceField.field_id] = targetFieldId;
-          }
-        });
-
-        return fieldMapping;
-      } catch (error) {
-        throw new Error(`字段映射失败: ${error.message}`);
       }
     }
 
@@ -1008,11 +887,24 @@
         log('📄 数据样本预览:');
         sampleData.forEach((record, index) => {
           log(`  记录 ${index + 1} (${record.recordId}):`);
-          record.fields.slice(0, 3).forEach(field => {
-            log(`    ${field.fieldName}: ${field.value} (${field.valueType})`);
-          });
-          if (record.fields.length > 3) {
-            log(`    ... 还有 ${record.fields.length - 3} 个字段`);
+          // 按字段名排序并只显示前3个字段
+          const sortedFields = record.fields
+            .filter(field => field.fieldName !== 'Unknown')
+            .sort((a, b) => a.fieldName.localeCompare(b.fieldName))
+            .slice(0, 3);
+          
+          if (sortedFields.length === 0) {
+            log(`    (所有字段名称未知)`);
+          } else {
+            sortedFields.forEach(field => {
+              const displayValue = field.value !== null && field.value !== undefined 
+                ? String(field.value).substring(0, 50) 
+                : '(空值)';
+              log(`    ${field.fieldName}: ${displayValue} (${field.valueType})`);
+            });
+            if (record.fields.length > 3) {
+              log(`    ... 还有 ${record.fields.length - 3} 个字段`);
+            }
           }
         });
       }
@@ -1038,6 +930,16 @@
         21: '双向关联'
       };
       return typeNames[type] || `未知类型(${type})`;
+    }
+
+    // 获取复制方式文本
+    function getCopyMethodText(method) {
+      const texts = {
+        'all': '整表复制',
+        'field': '字段匹配复制',
+        'selected': '指定行复制'
+      };
+      return texts[method] || method;
     }
 
     // 获取映射方式文本

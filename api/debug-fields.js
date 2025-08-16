@@ -112,10 +112,11 @@ module.exports = async function handler(req, res) {
           return {
             fieldId,
             fieldName: field?.field_name || 'Unknown',
+            fieldType: field?.type || 'Unknown',
             value: record.fields[fieldId],
             valueType: typeof record.fields[fieldId]
           };
-        })
+        }).sort((a, b) => a.fieldName.localeCompare(b.fieldName)) // 按字段名排序
       }));
     } catch (error) {
       console.warn('获取样本数据失败:', error.message);
