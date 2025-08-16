@@ -53,16 +53,31 @@ module.exports = async function handler(req, res) {
     }
 
     const sourceRecord = recordsRes.data.items[0];
-    console.log('源记录数据:', JSON.stringify(sourceRecord, null, 2));
+    console.log('源记录完整数据:', JSON.stringify(sourceRecord, null, 2));
+    console.log('源记录字段keys:', Object.keys(sourceRecord.fields));
+    console.log('预期的源字段IDs:', sourceFields.map(f => f.field_id));
 
     // 4. 构建目标记录数据
     const targetData = {};
+    let transferredCount = 0;
+    
     Object.entries(fieldMapping).forEach(([sourceFieldId, targetFieldId]) => {
-      if (sourceRecord.fields[sourceFieldId] !== undefined) {
+      console.log(`检查字段映射: ${sourceFieldId} -> ${targetFieldId}`);
+      console.log(`源记录中是否存在 ${sourceFieldId}:`, sourceRecord.fields.hasOwnProperty(sourceFieldId));
+      console.log(`源记录中的值:`, sourceRecord.fields[sourceFieldId]);
+      
+      if (sourceRecord.fields.hasOwnProperty(sourceFieldId) && 
+          sourceRecord.fields[sourceFieldId] !== undefined && 
+          sourceRecord.fields[sourceFieldId] !== null) {
         targetData[targetFieldId] = sourceRecord.fields[sourceFieldId];
+        transferredCount++;
+        console.log(`✅ 成功映射字段 ${sourceFieldId} -> ${targetFieldId}: ${sourceRecord.fields[sourceFieldId]}`);
+      } else {
+        console.log(`⚠️ 字段 ${sourceFieldId} 在源记录中不存在或为空`);
       }
     });
     
+    console.log(`总共传输了 ${transferredCount} 个字段的数据`);
     console.log('目标记录数据:', JSON.stringify(targetData, null, 2));
 
     // 5. 创建记录

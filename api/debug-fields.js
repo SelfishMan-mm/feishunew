@@ -111,13 +111,18 @@ module.exports = async function handler(req, res) {
         // 创建字段ID到字段信息的映射
         const fieldIdMap = new Map(sourceFields.map(f => [f.field_id, f]));
         
+        console.log('记录字段keys:', Object.keys(record.fields));
+        console.log('预期字段IDs:', sourceFields.map(f => f.field_id));
+        
         return {
           recordId: record.record_id,
+          rawFields: record.fields, // 添加原始字段数据用于调试
           fields: Object.entries(record.fields).map(([fieldId, value]) => {
             const field = fieldIdMap.get(fieldId);
+            console.log(`字段 ${fieldId}: ${field ? field.field_name : 'Unknown'} = ${value}`);
             return {
               fieldId: fieldId,  // 使用真实的字段ID
-              fieldName: field?.field_name || 'Unknown',
+              fieldName: field?.field_name || `Unknown(${fieldId})`,
               fieldType: field?.type || 'Unknown',
               value: value,
               valueType: typeof value

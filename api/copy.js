@@ -93,15 +93,30 @@ module.exports = async function handler(req, res) {
         const payload = {};
         let mappedFieldCount = 0;
         
+        // 打印调试信息
+        console.log(`\n处理第 ${i + 1} 条记录 (${rec.record_id}):`);
+        console.log('记录中的字段keys:', Object.keys(rec.fields));
+        console.log('字段映射表:', fieldMap);
+        
         // 构建要写入的数据，只包含映射成功的字段
         for (const [sourceFieldId, targetFieldId] of Object.entries(fieldMap)) {
-          if (rec.fields[sourceFieldId] !== undefined && rec.fields[sourceFieldId] !== null) {
+          console.log(`检查映射: ${sourceFieldId} -> ${targetFieldId}`);
+          console.log(`源记录中是否存在: ${rec.fields.hasOwnProperty(sourceFieldId)}`);
+          console.log(`值: ${rec.fields[sourceFieldId]}`);
+          
+          if (rec.fields.hasOwnProperty(sourceFieldId) && 
+              rec.fields[sourceFieldId] !== undefined && 
+              rec.fields[sourceFieldId] !== null) {
             payload[targetFieldId] = rec.fields[sourceFieldId];
             mappedFieldCount++;
+            console.log(`✅ 成功映射: ${sourceFieldId} -> ${targetFieldId} = ${rec.fields[sourceFieldId]}`);
+          } else {
+            console.log(`⚠️ 跳过字段: ${sourceFieldId} (不存在或为空)`);
           }
         }
         
-        console.log(`第 ${i + 1} 条记录映射了 ${mappedFieldCount} 个字段:`, payload);
+        console.log(`第 ${i + 1} 条记录映射了 ${mappedFieldCount} 个字段`);
+        console.log('最终payload:', JSON.stringify(payload, null, 2));
         
         if (Object.keys(payload).length === 0) {
           console.warn(`第 ${i + 1} 条记录没有可映射的字段，跳过`);
