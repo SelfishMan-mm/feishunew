@@ -89,13 +89,20 @@ module.exports = async function handler(req, res) {
 
     console.log('创建结果:', JSON.stringify(createResult, null, 2));
 
+    // 安全获取目标记录ID
+    const targetRecordId = createResult?.data?.record?.record_id || 
+                          createResult?.data?.record_id || 
+                          createResult?.record_id || 
+                          '未知';
+
     res.json({
       success: true,
       message: '测试成功',
       sourceRecord: sourceRecord.record_id,
-      targetRecord: createResult.data.record.record_id,
+      targetRecord: targetRecordId,
       fieldMapping,
-      dataTransferred: targetData
+      dataTransferred: targetData,
+      createResultStructure: typeof createResult?.data // 调试信息
     });
 
   } catch (error) {
