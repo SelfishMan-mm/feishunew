@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>功能测试页面</title>
+  <style>
+    body { font-family: Arial; margin: 20px; }
+    .test-section { margin: 20px 0; padding: 20px; border: 1px solid #ddd; }
+    button { padding: 10px 20px; margin: 5px; }
+    .result { background: #f5f5f5; padding: 10px; margin: 10px 0; }
+  </style>
+</head>
+<body>
+  <h1>飞书多维表格复制工具 - 功能测试</h1>
+  
+  <div class="test-section">
+    <h3>1. 测试授权API</h3>
+    <input id="testBaseId" placeholder="Base ID" value="KnX9bIOTKaE3trspPCycfFMjnkg" />
+    <input id="testToken" placeholder="PersonalBaseToken" type="password" />
+    <button onclick="testAuth()">测试授权</button>
+    <div class="result" id="authResult">等待测试...</div>
+  </div>
+
+  <div class="test-section">
+    <h3>2. 测试表格列表API</h3>
+    <button onclick="testTables()">获取表格列表</button>
+    <div class="result" id="tablesResult">等待测试...</div>
+  </div>
+
+  <div class="test-section">
+    <h3>3. 测试字段获取API</h3>
+    <input id="testTableId" placeholder="表格ID" />
+    <button onclick="testFields()">获取字段列表</button>
+    <div class="result" id="fieldsResult">等待测试...</div>
+  </div>
+
+  <script>
+    let testBaseId = '';
+    let testToken = '';
+
+    async function testAuth() {
+      testBaseId = document.getElementById('testBaseId').value;
+      testToken = document.getElementById('testToken').value;
+      
+      if (!testBaseId || !testToken) {
+        document.getElementById('authResult').textContent = '请填写BaseId和Token';
+        return;
+      }
+
+      try {
+        const response = await fetch('/api/test-auth', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ baseId: testBaseId, personalToken: testToken })
+        });
+        
+        const data = await response.json();
+        document.getElementById('authResult').textContent = JSON.stringify(data, null, 2);
+      } catch (error) {
+        document.getElementById('authResult').textContent = `错误: ${error.message}`;
+      }
+    }
+
+    async function testTables() {
+      if (!testBaseId || !testToken) {
+        document.getElementById('tablesResult').textContent = '请先测试授权';
+        return;
+      }
+
+      try {
+        const response = await fetch('/api/tables', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ baseId: testBaseId, personalToken: testToken })
+        });
+        
+        const data = await response.json();
+        document.getElementById('tablesResult').textContent = JSON.stringify(data, null, 2);
+      } catch (error) {
+        document.getElementById('tablesResult').textContent = `错误: ${error.message}`;
+      }
+    }
+
+    async function testFields() {
+      const tableId = document.getElementById('testTableId').value;
+      
+      if (!testBaseId || !testToken) {
+        document.getElementById('fieldsResult').textContent = '请先测试授权';
+        return;
+      }
+      
+      if (!tableId) {
+        document.getElementById('fieldsResult').textContent = '请输入表格ID';
+        return;
+      }
+
+      try {
+        const response = await fetch('/api/fields', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ 
+            baseId: testBaseId, 
+            personalToken: testToken,
+            tableId: tableId
+          })
+        });
+        
+        const data = await response.json();
+        document.getElementById('fieldsResult').textContent = JSON.stringify(data, null, 2);
+      } catch (error) {
+        document.getElementById('fieldsResult').textContent = `错误: ${error.message}`;
+      }
+    }
+  </script>
+</body>
+</html>

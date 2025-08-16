@@ -3,7 +3,7 @@
 
 <head>
   <meta charset="utf-8">
-  <title>飞书多维表格跨表复制</title>
+  <title>飞书多维表格数据复制工具</title>
   <style>
     * {
       box-sizing: border-box;
@@ -19,65 +19,67 @@
     }
 
     .container {
-      max-width: 700px;
+      max-width: 800px;
       margin: 0 auto;
-      background: transparent;
-      border-radius: 0;
-      box-shadow: none;
-      overflow: visible;
+      background: white;
+      border-radius: 12px;
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+      overflow: hidden;
     }
 
     .header {
-      background: white;
-      padding: 32px 32px 24px 32px;
-      text-align: left;
-      border-radius: 8px;
-      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
-      margin-bottom: 24px;
+      background: linear-gradient(135deg, #1e40af 0%, #3b82f6 100%);
+      padding: 32px;
+      text-align: center;
+      color: white;
     }
 
     .title {
-      font-size: 26px;
-      font-weight: 600;
-      color: #2c3e50;
+      font-size: 28px;
+      font-weight: 700;
       margin: 0 0 8px 0;
       line-height: 1.2;
     }
 
     .subtitle {
-      font-size: 15px;
-      color: #64748b;
+      font-size: 16px;
+      opacity: 0.9;
       margin: 0;
     }
 
-    .highlight {
-      color: #1e40af;
-      font-weight: 600;
-    }
-
     .content {
-      display: flex;
-      flex-direction: column;
-      gap: 20px;
+      padding: 32px;
     }
 
-    .table-selector {
-      background: white;
+    .form-section {
+      margin-bottom: 32px;
+    }
+
+    .form-row {
+      display: flex;
+      align-items: center;
+      margin-bottom: 20px;
+      padding: 20px;
+      background: #f8fafc;
       border-radius: 8px;
-      padding: 24px;
-      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
       border: 1px solid #e2e8f0;
     }
 
-    .selector-label {
-      font-size: 15px;
+    .form-label {
+      width: 120px;
+      font-size: 16px;
       font-weight: 600;
-      color: #1e40af;
-      margin-bottom: 12px;
-      display: block;
+      color: #374151;
+      flex-shrink: 0;
     }
 
-    .table-dropdown {
+    .form-control {
+      flex: 1;
+      margin-left: 20px;
+    }
+
+    .form-select,
+    .form-input {
       width: 100%;
       padding: 12px 16px;
       border: 2px solid #e2e8f0;
@@ -85,237 +87,267 @@
       font-size: 14px;
       background: white;
       color: #2c3e50;
-      cursor: pointer;
       transition: all 0.2s ease;
       font-family: inherit;
     }
 
-    .table-dropdown:focus {
+    .form-select:focus,
+    .form-input:focus {
       outline: none;
       border-color: #1e40af;
       box-shadow: 0 0 0 3px rgba(30, 64, 175, 0.1);
     }
 
-    .table-dropdown:hover {
-      border-color: #3b82f6;
-    }
-
-    .compare-section {
-      text-align: center;
-      background: white;
-      padding: 32px 24px;
-      border-radius: 8px;
-      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
-      border: 1px solid #e2e8f0;
-    }
-
-    .compare-btn {
-      background: linear-gradient(135deg, #1e40af 0%, #3b82f6 100%);
-      color: white;
-      border: none;
-      padding: 14px 32px;
-      border-radius: 6px;
-      font-size: 15px;
-      font-weight: 600;
-      cursor: pointer;
-      transition: all 0.3s ease;
-      position: relative;
-      overflow: hidden;
-      box-shadow: 0 4px 12px rgba(30, 64, 175, 0.2);
-    }
-
-    .compare-btn:hover {
-      transform: translateY(-2px);
-      box-shadow: 0 6px 20px rgba(30, 64, 175, 0.3);
-    }
-
-    .compare-btn:active {
-      transform: translateY(0);
-    }
-
-    .compare-text {
-      color: #1e40af;
-      font-size: 15px;
-      font-weight: 500;
-      margin-top: 16px;
-    }
-
-    .query-section {
-      background: white;
-      padding: 24px;
-      border-radius: 8px;
-      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
-      border: 1px solid #e2e8f0;
-    }
-
-    .query-label {
-      color: #1e40af;
-      font-size: 15px;
-      font-weight: 600;
-      margin-bottom: 12px;
-      display: block;
-    }
-
-    .action-buttons {
-      display: flex;
-      flex-direction: column;
-      gap: 16px;
-      background: white;
-      padding: 24px;
-      border-radius: 8px;
-      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
-      border: 1px solid #e2e8f0;
-    }
-
-    .action-btn {
-      width: 100%;
-      padding: 16px 20px;
-      border: 2px solid #1e40af;
-      border-radius: 6px;
-      background: white;
-      color: #1e40af;
-      font-size: 15px;
-      font-weight: 600;
-      cursor: pointer;
-      transition: all 0.3s ease;
-      position: relative;
-      overflow: hidden;
-    }
-
-    .action-btn:hover:not(:disabled) {
-      background: #1e40af;
-      color: white;
-      transform: translateY(-1px);
-      box-shadow: 0 4px 12px rgba(30, 64, 175, 0.2);
-    }
-
-    .action-btn:active {
-      transform: translateY(0);
-    }
-
-    .action-btn.primary {
-      background: linear-gradient(135deg, #1e40af 0%, #3b82f6 100%);
-      color: white;
-      border-color: #1e40af;
-    }
-
-    .action-btn.primary:hover:not(:disabled) {
-      background: linear-gradient(135deg, #1e3a8a 0%, #2563eb 100%);
-      box-shadow: 0 6px 20px rgba(30, 64, 175, 0.3);
-    }
-
-    .action-btn:disabled {
-      opacity: 0.4;
-      cursor: not-allowed;
-      transform: none;
-      box-shadow: none;
-      background: #f8fafc;
-      color: #94a3b8;
-      border-color: #e2e8f0;
-    }
-
-    .hidden {
-      display: none;
-    }
-
-    /* 数据预览表格 */
-    .preview-section {
-      background: white;
-      padding: 24px;
-      border-radius: 8px;
-      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
-      border: 1px solid #e2e8f0;
-    }
-
-    .preview-table {
-      width: 100%;
-      border-collapse: collapse;
-      background: white;
-      border-radius: 6px;
-      overflow: hidden;
-      border: 1px solid #e2e8f0;
-    }
-
-    .preview-table th,
-    .preview-table td {
-      padding: 16px 20px;
-      text-align: left;
-      border-bottom: 1px solid #f1f5f9;
-    }
-
-    .preview-table th {
-      background: #f8fafc;
-      font-weight: 600;
-      color: #1e40af;
-      font-size: 14px;
-      position: sticky;
-      top: 0;
-    }
-
-    .preview-table td {
-      font-size: 14px;
-      color: #475569;
-    }
-
-    .preview-table tr:last-child td {
-      border-bottom: none;
-    }
-
-    .preview-table tr:hover {
-      background: #f8fafc;
-    }
-
-    .no-data {
-      text-align: center;
-      padding: 48px 20px;
-      color: #94a3b8;
+    .form-description {
+      font-size: 13px;
+      color: #64748b;
+      margin-top: 8px;
       font-style: italic;
     }
 
-    .data-count {
-      color: #64748b;
-      font-size: 14px;
+    .copy-options {
+      background: #f8fafc;
+      border-radius: 8px;
+      padding: 24px;
+      margin-bottom: 24px;
+      border: 1px solid #e2e8f0;
+    }
+
+    .copy-options h3 {
+      margin: 0 0 20px 0;
+      font-size: 18px;
+      font-weight: 600;
+      color: #1e40af;
+    }
+
+    .copy-method {
       margin-bottom: 16px;
-      font-weight: 500;
+    }
+
+    .copy-method label {
+      display: flex;
+      align-items: center;
+      padding: 12px 16px;
+      background: white;
+      border: 2px solid #e2e8f0;
+      border-radius: 6px;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+
+    .copy-method input[type="radio"] {
+      margin-right: 12px;
+      accent-color: #1e40af;
+    }
+
+    .copy-method label:hover {
+      border-color: #1e40af;
+      background: #f0f9ff;
+    }
+
+    .copy-method input[type="radio"]:checked+label {
+      border-color: #1e40af;
+      background: #eff6ff;
+    }
+
+    .copy-method input[type="radio"] {
+      margin-right: 12px;
+      accent-color: #1e40af;
+    }
+
+    .method-title {
+      font-weight: 600;
+      color: #374151;
+      margin-bottom: 4px;
+    }
+
+    .method-desc {
+      font-size: 13px;
+      color: #64748b;
+    }
+
+    .field-mapping {
+      background: #f8fafc;
+      border-radius: 8px;
+      padding: 24px;
+      margin-bottom: 24px;
+      border: 1px solid #e2e8f0;
+    }
+
+    .field-mapping h3 {
+      margin: 0 0 20px 0;
+      font-size: 18px;
+      font-weight: 600;
+      color: #1e40af;
+    }
+
+    .mapping-method {
+      margin-bottom: 16px;
+    }
+
+    .mapping-method label {
+      display: flex;
+      align-items: center;
+      padding: 12px 16px;
+      background: white;
+      border: 2px solid #e2e8f0;
+      border-radius: 6px;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+
+    .mapping-method input[type="radio"] {
+      margin-right: 12px;
+      accent-color: #1e40af;
+    }
+
+    .mapping-method label:hover {
+      border-color: #1e40af;
+      background: #f0f9ff;
+    }
+
+    .mapping-method input[type="radio"]:checked+label {
+      border-color: #1e40af;
+      background: #eff6ff;
+    }
+
+    .mapping-method input[type="radio"] {
+      margin-right: 12px;
+      accent-color: #1e40af;
+    }
+
+    .action-section {
+      text-align: center;
+      margin-bottom: 32px;
+    }
+
+    .start-btn {
+      background: linear-gradient(135deg, #1e40af 0%, #3b82f6 100%);
+      color: white;
+      border: none;
+      padding: 16px 48px;
+      border-radius: 8px;
+      font-size: 16px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      box-shadow: 0 4px 12px rgba(30, 64, 175, 0.3);
+    }
+
+    .start-btn:hover:not(:disabled) {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 20px rgba(30, 64, 175, 0.4);
+    }
+
+    .start-btn:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+      transform: none;
+    }
+
+    /* 进度监控 */
+    .progress-section {
+      background: #f8fafc;
+      border-radius: 8px;
+      padding: 24px;
+      margin-bottom: 24px;
+      border: 1px solid #e2e8f0;
+      display: none;
+    }
+
+    .progress-title {
+      font-size: 18px;
+      font-weight: 600;
+      color: #1e40af;
+      margin-bottom: 16px;
+    }
+
+    .progress-bar {
+      width: 100%;
+      height: 8px;
+      background: #e2e8f0;
+      border-radius: 4px;
+      overflow: hidden;
+      margin-bottom: 12px;
+    }
+
+    .progress-fill {
+      height: 100%;
+      background: linear-gradient(90deg, #1e40af, #3b82f6);
+      width: 0%;
+      transition: width 0.3s ease;
+    }
+
+    .progress-text {
+      font-size: 14px;
+      color: #64748b;
+      text-align: center;
+    }
+
+    .progress-details {
+      display: flex;
+      justify-content: space-between;
+      margin-top: 12px;
+      font-size: 13px;
+      color: #64748b;
     }
 
     /* 操作日志 */
     .log-section {
-      background: white;
-      padding: 24px;
+      background: #f8fafc;
       border-radius: 8px;
-      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+      padding: 24px;
       border: 1px solid #e2e8f0;
     }
 
     .log-title {
-      font-size: 16px;
+      font-size: 18px;
       font-weight: 600;
       color: #1e40af;
       margin-bottom: 16px;
-      display: block;
     }
 
     #log {
-      background: #f8fafc;
-      border: 2px solid #e2e8f0;
+      background: white;
+      border: 1px solid #e2e8f0;
       border-radius: 6px;
-      padding: 20px;
+      padding: 16px;
       white-space: pre-wrap;
       font-family: 'SF Mono', 'Monaco', 'JetBrains Mono', 'Cascadia Code', monospace;
-      max-height: 220px;
+      max-height: 300px;
       overflow-y: auto;
       font-size: 13px;
       line-height: 1.5;
       color: #475569;
-      box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.02);
     }
 
-    /* 隐藏的授权区域 */
+    /* 授权区域 */
+    .auth-toggle {
+      position: fixed;
+      top: 20px;
+      right: 20px;
+      background: linear-gradient(135deg, #1e40af 0%, #3b82f6 100%);
+      color: white;
+      border: none;
+      padding: 12px 20px;
+      border-radius: 6px;
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      z-index: 1001;
+      box-shadow: 0 4px 12px rgba(30, 64, 175, 0.3);
+      transition: all 0.2s ease;
+    }
+
+    .auth-toggle:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 6px 20px rgba(30, 64, 175, 0.4);
+    }
+
     .auth-section {
       position: fixed;
-      top: 16px;
-      right: 16px;
+      top: 60px;
+      right: 20px;
       background: white;
       padding: 20px;
       border-radius: 8px;
@@ -360,58 +392,8 @@
       box-shadow: 0 4px 12px rgba(30, 64, 175, 0.3);
     }
 
-    .auth-toggle {
-      position: fixed;
-      top: 16px;
-      right: 16px;
-      background: linear-gradient(135deg, #1e40af 0%, #3b82f6 100%);
-      color: white;
-      border: none;
-      padding: 12px 20px;
-      border-radius: 6px;
-      font-size: 13px;
-      font-weight: 600;
-      cursor: pointer;
-      z-index: 1001;
-      box-shadow: 0 4px 12px rgba(30, 64, 175, 0.2);
-      transition: all 0.2s ease;
-    }
-
-    .auth-toggle:hover {
-      transform: translateY(-1px);
-      box-shadow: 0 6px 20px rgba(30, 64, 175, 0.3);
-    }
-
-    .row-checkbox {
-      width: auto;
-      margin-right: 8px;
-      transform: scale(1.1);
-      accent-color: #1e40af;
-    }
-
-    .selected-row {
-      background: #eff6ff !important;
-      border-left: 3px solid #1e40af;
-    }
-
-    /* 滚动条美化 */
-    ::-webkit-scrollbar {
-      width: 6px;
-      height: 6px;
-    }
-
-    ::-webkit-scrollbar-track {
-      background: #f1f5f9;
-      border-radius: 3px;
-    }
-
-    ::-webkit-scrollbar-thumb {
-      background: #cbd5e1;
-      border-radius: 3px;
-    }
-
-    ::-webkit-scrollbar-thumb:hover {
-      background: #94a3b8;
+    .hidden {
+      display: none;
     }
 
     /* 响应式设计 */
@@ -420,21 +402,22 @@
         padding: 16px;
       }
 
-      .container {
-        max-width: 100%;
+      .content {
+        padding: 24px 20px;
       }
 
-      .header {
-        padding: 24px 20px 20px 20px;
+      .form-row {
+        flex-direction: column;
+        align-items: flex-start;
       }
 
-      .table-selector,
-      .compare-section,
-      .query-section,
-      .action-buttons,
-      .preview-section,
-      .log-section {
-        padding: 20px 16px;
+      .form-label {
+        width: 100%;
+        margin-bottom: 8px;
+      }
+
+      .form-control {
+        margin-left: 0;
       }
     }
   </style>
@@ -454,95 +437,111 @@
 
   <div class="container">
     <div class="header">
-      <div class="title">欢迎使用 跨表比对 <span class="highlight">跨表复制</span></div>
-      <div class="subtitle">支持动态授权，通用于任意Base</div>
+      <div class="title">飞书多维表格数据复制工具</div>
+      <div class="subtitle">简单易用的跨表数据复制解决方案</div>
     </div>
 
     <div class="content">
-      <!-- 主要选择区域 -->
-      <div class="table-selector">
-        <div class="selector-label">选择源数据表</div>
-        <select class="table-dropdown" id="sourceTable" onchange="onSourceTableChange()">
-          <option value="">请先完成授权后选择表格</option>
-        </select>
-      </div>
+      <!-- 数据源配置 -->
+      <div class="form-section">
+        <div class="form-row">
+          <div class="form-label">数据源</div>
+          <div class="form-control">
+            <select class="form-select" id="sourceTable">
+              <option value="">下拉选择飞书多维表格</option>
+            </select>
+            <div class="form-description">选择源表</div>
+          </div>
+        </div>
 
-      <div class="table-selector">
-        <div class="selector-label">选择目标数据表</div>
-        <select class="table-dropdown" id="targetTable">
-          <option value="">请先完成授权后选择表格</option>
-        </select>
-      </div>
-
-      <div class="compare-section">
-        <button class="compare-btn" onclick="loadPreviewData()">
-          <span>对比</span>
-        </button>
-        <div class="compare-text">选择查询字段</div>
-      </div>
-
-      <!-- 查询字段选择 -->
-      <div class="table-selector">
-        <div class="selector-label">选择查询字段</div>
-        <select class="table-dropdown" id="queryFieldSelect">
-          <option value="">请先选择源表格</option>
-        </select>
-      </div>
-
-      <div class="query-section">
-        <div class="query-label">填写查询值</div>
-        <div style="display: flex; gap: 10px;">
-          <select class="table-dropdown" id="queryOperator" style="flex: 0 0 120px;">
-            <option value="contains">包含</option>
-            <option value="equals">等于</option>
-            <option value="startsWith">开头是</option>
-            <option value="endsWith">结尾是</option>
-            <option value="notEmpty">不为空</option>
-            <option value="isEmpty">为空</option>
-          </select>
-          <input type="text" class="table-dropdown" id="queryValue" placeholder="请输入要查询的值" style="flex: 1;" />
+        <div class="form-row">
+          <div class="form-label">目标表</div>
+          <div class="form-control">
+            <select class="form-select" id="targetTable">
+              <option value="">下拉选择飞书多维表格</option>
+            </select>
+            <div class="form-description">选择目标表</div>
+          </div>
         </div>
       </div>
 
-      <!-- 数据预览区域 -->
-      <div class="preview-section" id="previewSection" style="display: none;">
-        <div class="data-count" id="dataCount">已选：0 条数据</div>
-        <table class="preview-table" id="previewTable">
-          <thead>
-            <tr>
-              <th>选择</th>
-              <th>序号</th>
-              <th id="primaryFieldHeader">主字段</th>
-            </tr>
-          </thead>
-          <tbody id="previewTableBody">
-            <tr>
-              <td colspan="3" class="no-data">请先选择表格并点击对比按钮</td>
-            </tr>
-          </tbody>
-        </table>
+      <!-- 复制记录选项 -->
+      <div class="copy-options">
+        <h3>复制记录</h3>
+
+        <div class="copy-method">
+          <label for="copyAll">
+            <input type="radio" id="copyAll" name="copyMethod" value="all" checked>
+            <div>
+              <div class="method-title">整表复制</div>
+              <div class="method-desc">一键将源表全部数据复制到目标表（覆盖式）</div>
+            </div>
+          </label>
+        </div>
+
+        <div class="copy-method">
+          <label for="copyByField">
+            <input type="radio" id="copyByField" name="copyMethod" value="field">
+            <div>
+              <div class="method-title">整行复制（按字段匹配）</div>
+              <div class="method-desc">字段名相同→复制值；不同→留空</div>
+            </div>
+          </label>
+        </div>
+
+        <div class="copy-method">
+          <label for="copySelected">
+            <input type="radio" id="copySelected" name="copyMethod" value="selected">
+            <div>
+              <div class="method-title">指定行复制</div>
+              <div class="method-desc">用户手动勾选若干行后再执行复制</div>
+            </div>
+          </label>
+        </div>
       </div>
 
-      <!-- 字段映射配置 -->
-      <div class="preview-section" id="fieldMappingSection" style="display: none;">
-        <div class="data-count">字段映射配置</div>
-        <table class="preview-table" id="fieldMappingTable">
-          <thead>
-            <tr>
-              <th>源字段</th>
-              <th>目标字段</th>
-            </tr>
-          </thead>
-          <tbody id="fieldMappingBody">
-          </tbody>
-        </table>
+      <!-- 字段匹配选项 -->
+      <div class="field-mapping">
+        <h3>字段匹配</h3>
+
+        <div class="mapping-method">
+          <label for="autoMapping">
+            <input type="radio" id="autoMapping" name="mappingMethod" value="auto" checked>
+            <div>
+              <div class="method-title">自动匹配</div>
+              <div class="method-desc">同名字段自动对应</div>
+            </div>
+          </label>
+        </div>
+
+        <div class="mapping-method">
+          <label for="manualMapping">
+            <input type="radio" id="manualMapping" name="mappingMethod" value="manual">
+            <div>
+              <div class="method-title">手动勾选</div>
+              <div class="method-desc">用户可手动选择更复制的字段（可选）</div>
+            </div>
+          </label>
+        </div>
       </div>
 
-      <!-- 操作按钮 -->
-      <div class="action-buttons">
-        <button class="action-btn" onclick="showFieldMapping()" id="configMappingBtn" disabled>配置字段映射</button>
-        <button class="action-btn" onclick="copySelectedRows()" id="copyRowsBtn" disabled>整行复制</button>
-        <button class="action-btn primary" onclick="copyEntireTable()" id="copyTableBtn" disabled>整表复制</button>
+      <!-- 开始复制按钮 -->
+      <div class="action-section">
+        <button class="start-btn" onclick="startCopy()" id="startBtn" disabled>开始复制</button>
+      </div>
+
+      <!-- 进度监控 -->
+      <div class="progress-section" id="progressSection">
+        <div class="progress-title">复制进度</div>
+        <div class="progress-bar">
+          <div class="progress-fill" id="progressFill"></div>
+        </div>
+        <div class="progress-text" id="progressText">准备中...</div>
+        <div class="progress-details">
+          <span id="progressCurrent">已处理: 0</span>
+          <span id="progressTotal">总计: 0</span>
+          <span id="progressSpeed">速度: 0/s</span>
+        </div>
       </div>
 
       <!-- 操作日志 -->
@@ -558,7 +557,6 @@
     let currentToken = null;
     let isAuthorized = false;
     let sourceTableData = [];
-    let selectedRows = new Set();
     let sourceFields = [];
     let targetFields = [];
     let customFieldMapping = {};
@@ -566,6 +564,11 @@
     // 页面加载时初始化
     window.addEventListener('load', () => {
       autoDetectBaseId();
+      updateStartButton();
+
+      // 监听表格选择变化
+      document.getElementById('sourceTable').addEventListener('change', updateStartButton);
+      document.getElementById('targetTable').addEventListener('change', updateStartButton);
     });
 
     // 切换授权面板
@@ -629,6 +632,7 @@
           document.getElementById('authStatus').style.color = '#52c41a';
 
           await loadTables();
+          updateStartButton();
           log(`✅ 授权成功！可访问 ${data.tableCount} 个表格`);
         } else {
           isAuthorized = false;
@@ -657,8 +661,8 @@
           const sourceSelect = document.getElementById('sourceTable');
           const targetSelect = document.getElementById('targetTable');
 
-          sourceSelect.innerHTML = '<option value="">请选择源数据表</option>';
-          targetSelect.innerHTML = '<option value="">请选择目标数据表</option>';
+          sourceSelect.innerHTML = '<option value="">下拉选择飞书多维表格</option>';
+          targetSelect.innerHTML = '<option value="">下拉选择飞书多维表格</option>';
 
           data.tables.forEach(table => {
             const sourceOption = document.createElement('option');
@@ -679,84 +683,68 @@
       }
     }
 
-    // 源表格变化时的处理
-    async function onSourceTableChange() {
-      const sourceTableId = document.getElementById('sourceTable').value;
-      if (!sourceTableId) {
-        document.getElementById('queryFieldSelect').innerHTML = '<option value="">请先选择源表格</option>';
-        return;
-      }
+    // 更新开始按钮状态
+    function updateStartButton() {
+      const startBtn = document.getElementById('startBtn');
+      const sourceTable = document.getElementById('sourceTable').value;
+      const targetTable = document.getElementById('targetTable').value;
 
-      // 重置预览数据
-      document.getElementById('previewSection').style.display = 'none';
-      document.getElementById('fieldMappingSection').style.display = 'none';
-      selectedRows.clear();
-      customFieldMapping = {};
-      updateButtonStates();
-
-      // 加载源表格字段到查询字段选择器
-      await loadQueryFields(sourceTableId);
-
-      log(`📋 已选择源表格: ${sourceTableId}`);
+      startBtn.disabled = !isAuthorized || !sourceTable || !targetTable;
     }
 
-    // 加载查询字段选项
-    async function loadQueryFields(tableId) {
-      try {
-        const response = await fetch('/api/fields', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            baseId: currentBaseId,
-            personalToken: currentToken,
-            tableId: tableId
-          })
-        });
-
-        const data = await response.json();
-        if (data.success) {
-          sourceFields = data.fields;
-          const queryFieldSelect = document.getElementById('queryFieldSelect');
-          queryFieldSelect.innerHTML = '<option value="">选择查询字段</option>';
-
-          data.fields.forEach(field => {
-            const option = document.createElement('option');
-            option.value = field.field_id;
-            option.textContent = `${field.field_name} (${field.type})`;
-            queryFieldSelect.appendChild(option);
-          });
-
-          log(`✅ 已加载 ${data.fields.length} 个查询字段选项`);
-        }
-      } catch (error) {
-        log(`❌ 加载查询字段失败: ${error.message}`);
-      }
-    }
-
-    // 加载预览数据
-    async function loadPreviewData() {
+    // 开始复制
+    async function startCopy() {
       const sourceTableId = document.getElementById('sourceTable').value;
       const targetTableId = document.getElementById('targetTable').value;
-      const queryFieldId = document.getElementById('queryFieldSelect').value;
-      const queryOperator = document.getElementById('queryOperator').value;
-      const queryValue = document.getElementById('queryValue').value.trim();
+      const copyMethod = document.querySelector('input[name="copyMethod"]:checked').value;
+      const mappingMethod = document.querySelector('input[name="mappingMethod"]:checked').value;
 
-      if (!sourceTableId) {
-        return log('❗ 请先选择源数据表');
-      }
-
-      if (!targetTableId) {
-        return log('❗ 请先选择目标数据表');
+      if (!sourceTableId || !targetTableId) {
+        return log('❗ 请先选择源表格和目标表格');
       }
 
       if (!isAuthorized) {
         return log('❗ 请先完成授权');
       }
 
-      log('🔍 正在加载数据预览...');
+      // 显示进度区域
+      const progressSection = document.getElementById('progressSection');
+      progressSection.style.display = 'block';
+
+      // 禁用开始按钮
+      document.getElementById('startBtn').disabled = true;
 
       try {
-        // 获取表格数据
+        log(`🚀 开始复制 - 方式: ${getCopyMethodText(copyMethod)}, 字段匹配: ${getMappingMethodText(mappingMethod)}`);
+
+        // 根据复制方式执行不同逻辑
+        switch (copyMethod) {
+          case 'all':
+            await executeFullTableCopy(sourceTableId, targetTableId, mappingMethod);
+            break;
+          case 'field':
+            await executeFieldMatchCopy(sourceTableId, targetTableId, mappingMethod);
+            break;
+          case 'selected':
+            await executeSelectedRowsCopy(sourceTableId, targetTableId, mappingMethod);
+            break;
+        }
+
+      } catch (error) {
+        log(`❌ 复制失败: ${error.message}`);
+        updateProgress(0, 0, 0, '复制失败');
+      } finally {
+        // 重新启用开始按钮
+        document.getElementById('startBtn').disabled = false;
+      }
+    }
+
+    // 执行整表复制
+    async function executeFullTableCopy(sourceTableId, targetTableId, mappingMethod) {
+      updateProgress(0, 0, 0, '正在获取源表数据...');
+
+      try {
+        // 获取源表数据
         const dataResponse = await fetch('/api/data-operations', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -770,359 +758,157 @@
 
         const tableData = await dataResponse.json();
         if (!tableData.success) {
-          throw new Error('获取表格数据失败');
+          throw new Error('获取源表数据失败');
         }
 
-        sourceTableData = tableData.records;
+        const records = tableData.records;
+        updateProgress(0, records.length, 0, `准备复制 ${records.length} 条记录...`);
 
-        // 如果有查询条件，使用后端筛选逻辑
-        let filteredData = sourceTableData;
-        if (queryFieldId && queryValue && ['equals', 'contains', 'startsWith', 'endsWith'].includes(queryOperator)) {
-          console.log('🔍 调用后端筛选:', {
-            queryFieldId,
-            queryOperator,
-            queryValue,
-            sourceTableId
-          });
+        // 准备字段映射
+        let fieldMapping = {};
+        if (mappingMethod === 'auto') {
+          fieldMapping = await getAutoFieldMapping(sourceTableId, targetTableId);
+        } else {
+          // 手动映射逻辑（暂时使用自动映射）
+          fieldMapping = await getAutoFieldMapping(sourceTableId, targetTableId);
+        }
 
-          const filterResponse = await fetch('/api/data-operations', {
+        log(`✅ 字段映射完成，映射 ${Object.keys(fieldMapping).length} 个字段`);
+
+        // 执行复制
+        const copyResponse = await fetch('/api/copy', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            sourceTableId,
+            targetTableId,
+            baseId: currentBaseId,
+            personalToken: currentToken,
+            customFieldMapping: fieldMapping
+          })
+        });
+
+        const copyResult = await copyResponse.json();
+        if (copyResult.success) {
+          updateProgress(copyResult.copied, copyResult.copied, copyResult.copied, '复制完成！');
+          log(`✅ 整表复制完成！成功复制 ${copyResult.copied} 条记录`);
+        } else {
+          throw new Error(copyResult.error || '复制失败');
+        }
+
+      } catch (error) {
+        throw error;
+      }
+    }
+
+    // 执行字段匹配复制
+    async function executeFieldMatchCopy(sourceTableId, targetTableId, mappingMethod) {
+      // 与整表复制逻辑相同，但可以添加更多字段匹配的特殊处理
+      await executeFullTableCopy(sourceTableId, targetTableId, mappingMethod);
+    }
+
+    // 执行选定行复制
+    async function executeSelectedRowsCopy(sourceTableId, targetTableId, mappingMethod) {
+      updateProgress(0, 0, 0, '该功能正在开发中...');
+      log('⚠️ 指定行复制功能正在开发中，请使用整表复制');
+
+      // 暂时回退到整表复制
+      await executeFullTableCopy(sourceTableId, targetTableId, mappingMethod);
+    }
+
+    // 获取自动字段映射
+    async function getAutoFieldMapping(sourceTableId, targetTableId) {
+      try {
+        const [sourceResponse, targetResponse] = await Promise.all([
+          fetch('/api/fields', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
-              operation: 'preview-filter',
-              sourceTableId: sourceTableId,
               baseId: currentBaseId,
               personalToken: currentToken,
-              filters: [{
-                field: queryFieldId,
-                operator: queryOperator,
-                value: queryValue
-              }]
+              tableId: sourceTableId
             })
-          });
-
-          const filterResult = await filterResponse.json();
-          if (filterResult.success) {
-            // ✅ 直接使用后端返回的筛选结果
-            filteredData = filterResult.records || sourceTableData;
-            log(`🔍 筛选结果：${filterResult.matchedCount} / ${sourceTableData.length} 条记录`);
-          }
-        } else if (queryFieldId && ['notEmpty', 'isEmpty'].includes(queryOperator)) {
-          // 对于 notEmpty/isEmpty，也调用后端筛选
-          const filterResponse = await fetch('/api/data-operations', {
+          }),
+          fetch('/api/fields', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
-              operation: 'preview-filter',
-              sourceTableId: sourceTableId,
               baseId: currentBaseId,
               personalToken: currentToken,
-              filters: [{
-                field: queryFieldId,
-                operator: queryOperator,
-                value: ''
-              }]
+              tableId: targetTableId
             })
-          });
+          })
+        ]);
 
-          const filterResult = await filterResponse.json();
-          if (filterResult.success) {
-            filteredData = filterResult.records || sourceTableData;
-            log(`🔍 筛选结果：${filterResult.matchedCount} / ${sourceTableData.length} 条记录`);
+        const [sourceData, targetData] = await Promise.all([
+          sourceResponse.json(),
+          targetResponse.json()
+        ]);
+
+        if (!sourceData.success || !targetData.success) {
+          throw new Error('获取字段信息失败');
+        }
+
+        const sourceFields = sourceData.fields;
+        const targetFields = targetData.fields;
+        const targetFieldMap = new Map(targetFields.map(f => [f.field_name.toLowerCase(), f.field_id]));
+        const fieldMapping = {};
+
+        sourceFields.forEach(sourceField => {
+          const targetFieldId = targetFieldMap.get(sourceField.field_name.toLowerCase());
+          if (targetFieldId) {
+            fieldMapping[sourceField.field_id] = targetFieldId;
           }
-        }
-
-        const queryFieldName = queryFieldId ?
-          sourceFields.find(f => f.field_id === queryFieldId)?.field_name || '查询字段' :
-          sourceFields[0]?.field_name || '主字段';
-
-        displayPreviewData(filteredData, queryFieldName, queryFieldId);
-
-        log(`✅ 已加载 ${sourceTableData.length} 条记录`);
-
-      } catch (error) {
-        log(`❌ 加载预览数据失败: ${error.message}`);
-      }
-    }
-
-    // 前端筛选逻辑（与后端保持一致）
-    function applyFilterLogic(fieldValue, operator, queryValue) {
-      if (fieldValue === undefined || fieldValue === null || fieldValue === '') {
-        return operator === 'isEmpty';
-      }
-
-      if (operator === 'notEmpty') {
-        return true;
-      }
-
-      if (operator === 'isEmpty') {
-        return false;
-      }
-
-      const valueStr = String(fieldValue).toLowerCase();
-      const queryStr = String(queryValue).toLowerCase();
-
-      switch (operator) {
-        case 'equals':
-          return valueStr === queryStr;
-        case 'contains':
-          return valueStr.includes(queryStr);
-        case 'startsWith':
-          return valueStr.startsWith(queryStr);
-        case 'endsWith':
-          return valueStr.endsWith(queryStr);
-        default:
-          return false;
-      }
-    }
-
-    // 显示预览数据
-    function displayPreviewData(records, fieldName, fieldId) {
-      const previewSection = document.getElementById('previewSection');
-      const dataCount = document.getElementById('dataCount');
-      const primaryFieldHeader = document.getElementById('primaryFieldHeader');
-      const tableBody = document.getElementById('previewTableBody');
-
-      previewSection.style.display = 'block';
-      primaryFieldHeader.textContent = fieldName;
-      dataCount.textContent = `已选：${records.length} 条数据`;
-
-      if (records.length === 0) {
-        tableBody.innerHTML = '<tr><td colspan="3" class="no-data">没有找到匹配的数据</td></tr>';
-        updateButtonStates();
-        return;
-      }
-
-      tableBody.innerHTML = records.map((record, index) => {
-        const fieldValue = fieldId ? (record.fields[fieldId] || '无数据') : (record.fields[sourceFields[0]?.field_id] || '无数据');
-        return `
-          <tr>
-            <td><input type="checkbox" class="row-checkbox" data-record-id="${record.record_id}" onchange="toggleRowSelection(this)"></td>
-            <td>${index + 1}</td>
-            <td>${fieldValue}</td>
-          </tr>
-        `;
-      }).join('');
-
-      updateButtonStates();
-    }
-
-    // 切换行选择
-    function toggleRowSelection(checkbox) {
-      const recordId = checkbox.dataset.recordId;
-      const row = checkbox.closest('tr');
-
-      if (checkbox.checked) {
-        selectedRows.add(recordId);
-        row.classList.add('selected-row');
-      } else {
-        selectedRows.delete(recordId);
-        row.classList.remove('selected-row');
-      }
-
-      updateButtonStates();
-    }
-
-    // 显示字段映射配置
-    async function showFieldMapping() {
-      const sourceTableId = document.getElementById('sourceTable').value;
-      const targetTableId = document.getElementById('targetTable').value;
-
-      if (!sourceTableId || !targetTableId) {
-        return log('❗ 请先选择源表格和目标表格');
-      }
-
-      try {
-        // 获取目标表格字段
-        const targetResponse = await fetch('/api/fields', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            baseId: currentBaseId,
-            personalToken: currentToken,
-            tableId: targetTableId
-          })
         });
 
-        const targetData = await targetResponse.json();
-        if (!targetData.success) {
-          throw new Error('获取目标表格字段失败');
-        }
-
-        targetFields = targetData.fields;
-        displayFieldMappingTable();
-
-        log(`✅ 字段映射配置已加载`);
-
+        return fieldMapping;
       } catch (error) {
-        log(`❌ 加载字段映射失败: ${error.message}`);
+        throw new Error(`字段映射失败: ${error.message}`);
       }
     }
 
-    // 显示字段映射表格
-    function displayFieldMappingTable() {
-      const fieldMappingSection = document.getElementById('fieldMappingSection');
-      const fieldMappingBody = document.getElementById('fieldMappingBody');
+    // 更新进度显示
+    function updateProgress(current, total, speed, status) {
+      const progressFill = document.getElementById('progressFill');
+      const progressText = document.getElementById('progressText');
+      const progressCurrent = document.getElementById('progressCurrent');
+      const progressTotal = document.getElementById('progressTotal');
+      const progressSpeed = document.getElementById('progressSpeed');
 
-      fieldMappingSection.style.display = 'block';
+      const percentage = total > 0 ? Math.round((current / total) * 100) : 0;
 
-      // 自动建立初始映射
-      const autoMapping = {};
-      const targetFieldMap = new Map(targetFields.map(f => [f.field_name.toLowerCase(), f]));
-
-      sourceFields.forEach(sourceField => {
-        const matchedTarget = targetFieldMap.get(sourceField.field_name.toLowerCase());
-        if (matchedTarget) {
-          autoMapping[sourceField.field_id] = matchedTarget.field_id;
-        }
-      });
-
-      customFieldMapping = { ...autoMapping };
-
-      fieldMappingBody.innerHTML = sourceFields.map(sourceField => {
-        const mappedTargetId = customFieldMapping[sourceField.field_id] || '';
-
-        return `
-          <tr>
-            <td>${sourceField.field_name} (${sourceField.type})</td>
-            <td>
-              <select class="table-dropdown" data-source-field="${sourceField.field_id}" onchange="updateFieldMapping(this)">
-                <option value="">-- 不映射 --</option>
-                ${targetFields.map(tf =>
-          `<option value="${tf.field_id}" ${tf.field_id === mappedTargetId ? 'selected' : ''}>${tf.field_name} (${tf.type})</option>`
-        ).join('')}
-              </select>
-            </td>
-          </tr>
-        `;
-      }).join('');
-
-      log(`✅ 自动映射了 ${Object.keys(autoMapping).length} 个字段`);
+      progressFill.style.width = `${percentage}%`;
+      progressText.textContent = status;
+      progressCurrent.textContent = `已处理: ${current}`;
+      progressTotal.textContent = `总计: ${total}`;
+      progressSpeed.textContent = `速度: ${speed}/s`;
     }
 
-    // 更新字段映射
-    function updateFieldMapping(selectElement) {
-      const sourceFieldId = selectElement.dataset.sourceField;
-      const targetFieldId = selectElement.value;
-
-      if (targetFieldId) {
-        customFieldMapping[sourceFieldId] = targetFieldId;
-      } else {
-        delete customFieldMapping[sourceFieldId];
-      }
-
-      log(`🔄 字段映射已更新，当前映射 ${Object.keys(customFieldMapping).length} 个字段`);
+    // 获取复制方式文本
+    function getCopyMethodText(method) {
+      const texts = {
+        'all': '整表复制',
+        'field': '字段匹配复制',
+        'selected': '指定行复制'
+      };
+      return texts[method] || method;
     }
 
-    // 更新按钮状态
-    function updateButtonStates() {
-      const configMappingBtn = document.getElementById('configMappingBtn');
-      const copyRowsBtn = document.getElementById('copyRowsBtn');
-      const copyTableBtn = document.getElementById('copyTableBtn');
-
-      const hasSourceData = sourceTableData.length > 0;
-      const hasSelectedRows = selectedRows.size > 0;
-      const hasTargetTable = document.getElementById('targetTable').value;
-      const hasSourceTable = document.getElementById('sourceTable').value;
-
-      configMappingBtn.disabled = !hasSourceTable || !hasTargetTable;
-      copyRowsBtn.disabled = !hasSelectedRows || !hasTargetTable;
-      copyTableBtn.disabled = !hasSourceData || !hasTargetTable;
-    }
-
-    // 整行复制
-    async function copySelectedRows() {
-      if (selectedRows.size === 0) {
-        return log('❗ 请先选择要复制的行');
-      }
-
-      const targetTableId = document.getElementById('targetTable').value;
-      if (!targetTableId) {
-        return log('❗ 请先选择目标表格');
-      }
-
-      const selectedRecords = sourceTableData.filter(record => selectedRows.has(record.record_id));
-
-      if (!confirm(`确定要复制选中的 ${selectedRecords.length} 条记录吗？`)) {
-        return;
-      }
-
-      log(`🚀 开始复制选中的 ${selectedRecords.length} 条记录...`);
-
-      try {
-        const response = await fetch('/api/data-operations', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            operation: 'copy-records',
-            sourceTableId: document.getElementById('sourceTable').value,
-            targetTableId: targetTableId,
-            baseId: currentBaseId,
-            personalToken: currentToken,
-            records: selectedRecords,
-            customFieldMapping: Object.keys(customFieldMapping).length > 0 ? customFieldMapping : null
-          })
-        });
-
-        const data = await response.json();
-        if (data.success) {
-          log(`✅ 整行复制完成！成功复制 ${data.copied} 条记录`);
-          selectedRows.clear();
-          // 重新加载预览数据以更新选择状态
-          displayPreviewData(sourceTableData, document.getElementById('primaryFieldHeader').textContent);
-        } else {
-          log(`❌ 整行复制失败: ${data.error}`);
-        }
-      } catch (error) {
-        log(`❌ 网络错误: ${error.message}`);
-      }
-    }
-
-    // 整表复制
-    async function copyEntireTable() {
-      const sourceTableId = document.getElementById('sourceTable').value;
-      const targetTableId = document.getElementById('targetTable').value;
-
-      if (!sourceTableId || !targetTableId) {
-        return log('❗ 请先选择源表格和目标表格');
-      }
-
-      if (!confirm(`确定要复制整个表格的所有数据吗？\n将复制 ${sourceTableData.length} 条记录`)) {
-        return;
-      }
-
-      log(`🚀 开始整表复制，共 ${sourceTableData.length} 条记录...`);
-
-      try {
-        const response = await fetch('/api/copy', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            sourceTableId: sourceTableId,
-            targetTableId: targetTableId,
-            baseId: currentBaseId,
-            personalToken: currentToken,
-            customFieldMapping: Object.keys(customFieldMapping).length > 0 ? customFieldMapping : null
-          })
-        });
-
-        const data = await response.json();
-        if (data.success) {
-          log(`✅ 整表复制完成！成功复制 ${data.copied} 条记录`);
-        } else {
-          log(`❌ 整表复制失败: ${data.error}`);
-        }
-      } catch (error) {
-        log(`❌ 网络错误: ${error.message}`);
-      }
+    // 获取映射方式文本
+    function getMappingMethodText(method) {
+      const texts = {
+        'auto': '自动匹配',
+        'manual': '手动选择'
+      };
+      return texts[method] || method;
     }
 
     // 日志函数
     function log(message) {
-      const logElement = document.getElementById('log');
-      const timestamp = new Date().toLocaleTimeString();
-      logElement.textContent += `[${timestamp}] ${message}\n`;
-      logElement.scrollTop = logElement.scrollHeight;
+      const logEl = document.getElementById('log');
+      const time = new Date().toLocaleTimeString();
+      logEl.textContent += `[${time}] ${message}\n`;
+      logEl.scrollTop = logEl.scrollHeight;
     }
   </script>
 </body>
