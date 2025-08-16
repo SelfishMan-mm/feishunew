@@ -38,32 +38,51 @@ module.exports = async function handler(req, res) {
       
       // 检查返回数据结构
       if (!sf?.data?.items) {
+        console.error('源表格字段API完整响应:', JSON.stringify(sf, null, 2));
         throw new Error(`源表格字段获取失败，响应结构异常: ${JSON.stringify(sf)}`);
       }
       if (!tf?.data?.items) {
+        console.error('目标表格字段API完整响应:', JSON.stringify(tf, null, 2));
         throw new Error(`目标表格字段获取失败，响应结构异常: ${JSON.stringify(tf)}`);
       }
       
       const sFields = sf.data.items;
       const tFields = tf.data.items;
       
+      console.log('源表字段详情:', sFields.map(f => ({ id: f.field_id, name: f.field_name, type: f.type })));
+      console.log('目标表字段详情:', tFields.map(f => ({ id: f.field_id, name: f.field_name, type: f.type })));
+      
       console.log('字段信息:', { sourceFields: sFields.length, targetFields: tFields.length });
 
       const map = new Map(tFields.map(f => [f.field_name, f.field_id]));
-      sFields.forEach(f => { const id = map.get(f.field_name); if (id) fieldMap[f.field_id] = id; });
+      sFields.forEach(f => { 
+        const id = map.get(f.field_name); 
+        if (id) {
+          fieldMap[f.field_id] = id;
+          console.log(`字段映射: ${f.field_name} (${f.field_id}) -> (${id})`);
+        } else {
+          console.warn(`未找到匹配的目标字段: ${f.field_name}`);
+        }
+      });
       console.log('✅ 整表复制使用自动字段映射:', Object.keys(fieldMap).length, '个字段');
+      console.log('完整字段映射:', fieldMap);
     }
 
     let pageToken;
     const records = [];
     do {
+      console.log(`获取记录分页，pageToken: ${pageToken || 'null'}`);
       const r = await client.base.appTableRecord.list({
         path: { table_id: sourceTableId },
         params: { page_size: 100, page_token: pageToken }
       });
+      
+      console.log(`获取到 ${r.data.items.length} 条记录`);
       records.push(...r.data.items);
       pageToken = r.data.page_token;
     } while (pageToken);
+    
+    console.log(`总共获取 ${records.length} 条记录`);
 
     // 2. 写入目标表
     console.log(`开始写入 ${records.length} 条记录到目标表...`);
@@ -72,10 +91,21 @@ module.exports = async function handler(req, res) {
       const rec = records[i];
       try {
         const payload = {};
-        for (const [s, t] of Object.entries(fieldMap)) {
-          if (rec.fields[s] !== undefined && rec.fields[s] !== null) {
-            payload[t] = rec.fields[s];
+        let mappedFieldCount = 0;
+        
+        // 构建要写入的数据，只包含映射成功的字段
+        for (const [sourceFieldId, targetFieldId] of Object.entries(fieldMap)) {
+          if (rec.fields[sourceFieldId] !== undefined && rec.fields[sourceFieldId] !== null) {
+            payload[targetFieldId] = rec.fields[sourceFieldId];
+            mappedFieldCount++;
           }
+        }
+        
+        console.log(`第 ${i + 1} 条记录映射了 ${mappedFieldCount} 个字段:`, payload);
+        
+        if (Object.keys(payload).length === 0) {
+          console.warn(`第 ${i + 1} 条记录没有可映射的字段，跳过`);
+          continue;
         }
         
         console.log(`正在写入第 ${i + 1}/${records.length} 条记录...`);
@@ -98,8 +128,21 @@ module.exports = async function handler(req, res) {
           error: recordError.message,
           response: recordError.response?.data,
           record: rec.record_id,
-          fields: Object.keys(rec.fields)
+          fields: Object.keys(rec.fields),
+          payload: JSON.stringify(payload, null, 2)
         });
+        
+        // 解析具体的API错误
+        const apiError = recordError.response?.data;
+        if (apiError) {
+          console.error('API错误详情:', JSON.stringify(apiError, null, 2));
+          
+          if (apiError.sc === 30) {
+            console.error('错误分析：字段类型不匹配或字段不存在');
+            console.error('请检查字段映射:', fieldMap);
+            console.error('当前记录数据:', rec.fields);
+          }
+        }
         
         // 如果是单条记录错误，继续处理下一条
         if (recordError.response?.data?.sc === 30) {

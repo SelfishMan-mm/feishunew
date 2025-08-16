@@ -105,21 +105,29 @@ module.exports = async function handler(req, res) {
         params: { page_size: 3 }
       });
       
-      sampleData = sampleRes?.data?.items?.map(record => ({
-        recordId: record.record_id,
-        fields: Object.keys(record.fields).map(fieldId => {
-          const field = sourceFields.find(f => f.field_id === fieldId);
-          return {
-            fieldId,
-            fieldName: field?.field_name || 'Unknown',
-            fieldType: field?.type || 'Unknown',
-            value: record.fields[fieldId],
-            valueType: typeof record.fields[fieldId]
-          };
-        }).sort((a, b) => a.fieldName.localeCompare(b.fieldName)) // 按字段名排序
-      }));
+      console.log('样本数据原始响应:', JSON.stringify(sampleRes, null, 2));
+      
+      sampleData = sampleRes?.data?.items?.map(record => {
+        // 创建字段ID到字段信息的映射
+        const fieldIdMap = new Map(sourceFields.map(f => [f.field_id, f]));
+        
+        return {
+          recordId: record.record_id,
+          fields: Object.entries(record.fields).map(([fieldId, value]) => {
+            const field = fieldIdMap.get(fieldId);
+            return {
+              fieldId: fieldId,  // 使用真实的字段ID
+              fieldName: field?.field_name || 'Unknown',
+              fieldType: field?.type || 'Unknown',
+              value: value,
+              valueType: typeof value
+            };
+          }).sort((a, b) => a.fieldName.localeCompare(b.fieldName)) // 按字段名排序
+        };
+      });
     } catch (error) {
       console.warn('获取样本数据失败:', error.message);
+      console.warn('错误详情:', error.response?.data);
     }
 
     res.json({
