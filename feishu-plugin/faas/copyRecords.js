@@ -148,3 +148,12 @@ module.exports = async function(event, context) {
     };
   }
 };
+
+console.log('写入字段:', transformedFields);
+await client.base.appTableRecord.create({
+  path: { table_id: targetTableId },
+  data: { fields: transformedFields }
+}).catch(err => {
+  console.error('写入失败字段:', transformedFields, err.message);
+  throw err;   // 继续抛出去让前端看到
+});
