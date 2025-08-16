@@ -160,7 +160,7 @@ module.exports = async function handler(req, res) {
                   console.log(`🔄 默认保持: ${rawValue} (类型: ${targetField.type})`);
               }
               
-              payload[targetFieldId] = convertedValue;
+              payload[targetField.field_name] = convertedValue; // 🔧 使用字段名称作为键，不是字段ID
               mappedFieldCount++;
               console.log(`✅ 成功映射: ${sourceFieldName} -> ${targetField.field_name} = ${JSON.stringify(convertedValue)} (类型: ${targetField.type})`);
             } else {
@@ -183,10 +183,10 @@ module.exports = async function handler(req, res) {
         
         // 🔧 数据验证：只过滤 null 和 undefined，保留空字符串和其他值
         const validatedPayload = {};
-        for (const [fieldId, value] of Object.entries(payload)) {
+        for (const [fieldName, value] of Object.entries(payload)) {
           // ✅ 只过滤 null 和 undefined，保留空字符串 ''
           if (value !== null && value !== undefined) {
-            validatedPayload[fieldId] = value;
+            validatedPayload[fieldName] = value;
           }
         }
         

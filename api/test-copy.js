@@ -127,7 +127,7 @@ module.exports = async function handler(req, res) {
               console.log(`🔄 默认保持: ${rawValue} (类型: ${targetField.type})`);
           }
           
-          targetData[targetFieldId] = convertedValue;
+          targetData[targetField.field_name] = convertedValue; // 🔧 使用字段名称作为键，不是字段ID
           transferredCount++;
           console.log(`✅ 成功映射字段 ${sourceFieldName} -> ${targetField.field_name}: ${JSON.stringify(convertedValue)} (类型: ${targetField.type})`);
         } else {
@@ -146,13 +146,13 @@ module.exports = async function handler(req, res) {
     
     // 🔧 数据验证：只过滤 null 和 undefined，保留空字符串和其他值
     const validatedData = {};
-    for (const [fieldId, value] of Object.entries(targetData)) {
+    for (const [fieldName, value] of Object.entries(targetData)) {
       // ✅ 只过滤 null 和 undefined，保留空字符串 ''
       if (value !== null && value !== undefined) {
-        validatedData[fieldId] = value;
-        console.log(`✅ 保留字段值: ${fieldId} = ${JSON.stringify(value)}`);
+        validatedData[fieldName] = value;
+        console.log(`✅ 保留字段值: ${fieldName} = ${JSON.stringify(value)}`);
       } else {
-        console.log(`❌ 过滤字段值: ${fieldId} = ${JSON.stringify(value)} (null或undefined)`);
+        console.log(`❌ 过滤字段值: ${fieldName} = ${JSON.stringify(value)} (null或undefined)`);
       }
     }
     
