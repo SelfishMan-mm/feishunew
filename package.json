@@ -1,12 +1,13 @@
 {
-  "name": "feishu-table-sync",
+  "name": "feishu-table-copy-tool",
   "version": "2.0.0",
-  "description": "飞书多维表格数据同步工具 - 支持动态授权、智能字段匹配、差异对比",
+  "description": "飞书多维表格跨表复制工具 - 支持PersonalBaseToken认证、智能字段映射、数据类型转换",
   "type": "commonjs",
   "scripts": {
     "dev": "vercel dev",
-    "build": "echo 'No build step required'",
-    "start": "vercel dev"
+    "build": "echo 'Build completed - No build step required for this project'",
+    "start": "vercel dev",
+    "deploy": "vercel --prod"
   },
   "dependencies": {
     "@lark-base-open/node-sdk": "^1.0.1"
@@ -18,10 +19,17 @@
     "feishu",
     "lark",
     "table",
-    "sync",
+    "copy",
     "data-migration",
-    "field-mapping"
+    "field-mapping",
+    "personal-base-token",
+    "type-conversion"
   ],
-  "author": "Your Name",
-  "license": "MIT"
+  "author": "Feishu Table Copy Tool",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/SelfishMan-mm/feishutest.git"
+  },
+  "homepage": "https://feishutest.vercel.app"
 }
