@@ -23,16 +23,27 @@ module.exports = async function handler(req, res) {
     
     let fieldMap = {};
     let tFields = []; // 🔧 确保目标字段信息总是可用
+    let sFields = []; // 🔧 确保源字段信息总是可用
 
-    // 🔧 无论使用哪种映射方式，都需要获取目标字段信息用于类型转换
-    const tf = await client.base.appTableField.list({ path: { table_id: targetTableId } });
+    // 🔧 无论使用哪种映射方式，都需要获取源字段和目标字段信息
+    const [sf, tf] = await Promise.all([
+      client.base.appTableField.list({ path: { table_id: sourceTableId } }),
+      client.base.appTableField.list({ path: { table_id: targetTableId } })
+    ]);
     
+    if (!sf?.data?.items) {
+      console.error('源表格字段API完整响应:', JSON.stringify(sf, null, 2));
+      throw new Error(`源表格字段获取失败，响应结构异常: ${JSON.stringify(sf)}`);
+    }
     if (!tf?.data?.items) {
       console.error('目标表格字段API完整响应:', JSON.stringify(tf, null, 2));
       throw new Error(`目标表格字段获取失败，响应结构异常: ${JSON.stringify(tf)}`);
     }
     
+    sFields = sf.data.items;
     tFields = tf.data.items;
+    
+    console.log('源表字段详情:', sFields.map(f => ({ id: f.field_id, name: f.field_name, type: f.type })));
     console.log('目标表字段详情:', tFields.map(f => ({ id: f.field_id, name: f.field_name, type: f.type })));
 
     // ✅ 优先使用自定义字段映射
@@ -40,20 +51,8 @@ module.exports = async function handler(req, res) {
       fieldMap = customFieldMapping;
       console.log('✅ 整表复制使用自定义字段映射:', Object.keys(fieldMap).length, '个字段');
     } else {
-      // 获取源表字段信息进行自动映射
-      const sf = await client.base.appTableField.list({ path: { table_id: sourceTableId } });
-      
+      // 自动字段映射逻辑
       console.log('字段API响应:', { sf: sf?.data, tf: tf?.data });
-      
-      // 检查返回数据结构
-      if (!sf?.data?.items) {
-        console.error('源表格字段API完整响应:', JSON.stringify(sf, null, 2));
-        throw new Error(`源表格字段获取失败，响应结构异常: ${JSON.stringify(sf)}`);
-      }
-      
-      const sFields = sf.data.items;
-      
-      console.log('源表字段详情:', sFields.map(f => ({ id: f.field_id, name: f.field_name, type: f.type })));
       console.log('字段信息:', { sourceFields: sFields.length, targetFields: tFields.length });
 
       const map = new Map(tFields.map(f => [f.field_name, f.field_id]));
@@ -103,65 +102,72 @@ module.exports = async function handler(req, res) {
         
         // 构建要写入的数据，根据目标字段类型进行转换
         for (const [sourceFieldId, targetFieldId] of Object.entries(fieldMap)) {
-          console.log(`检查映射: ${sourceFieldId} -> ${targetFieldId}`);
-          console.log(`源记录中是否存在: ${rec.fields.hasOwnProperty(sourceFieldId)}`);
-          console.log(`原始值: ${rec.fields[sourceFieldId]}`);
+          // 🔧 关键修复：通过字段名称获取数据，而不是字段ID
+          const sourceField = sFields?.find(f => f.field_id === sourceFieldId);
+          const sourceFieldName = sourceField ? sourceField.field_name : null;
           
-          if (rec.fields.hasOwnProperty(sourceFieldId) && 
-              rec.fields[sourceFieldId] !== undefined && 
-              rec.fields[sourceFieldId] !== null) {
+          console.log(`检查映射: ${sourceFieldId} (${sourceFieldName}) -> ${targetFieldId}`);
+          console.log(`源记录字段keys:`, Object.keys(rec.fields));
+          console.log(`查找字段名: ${sourceFieldName}`);
+          console.log(`源记录中是否存在字段名: ${rec.fields.hasOwnProperty(sourceFieldName)}`);
+          
+          if (sourceFieldName && rec.fields.hasOwnProperty(sourceFieldName)) {
+            let rawValue = rec.fields[sourceFieldName]; // 🔧 使用字段名称获取值
+            console.log(`原始值: ${JSON.stringify(rawValue)}`);
             
-            let rawValue = rec.fields[sourceFieldId];
-            
-            // 🔧 根据目标字段类型进行数据转换
-            const targetField = tFields.find(f => f.field_id === targetFieldId);
-            if (!targetField) {
-              console.log(`⚠️ 未找到目标字段信息: ${targetFieldId}`);
-              continue;
+            if (rawValue !== undefined && rawValue !== null) {
+              // 🔧 根据目标字段类型进行数据转换
+              const targetField = tFields.find(f => f.field_id === targetFieldId);
+              if (!targetField) {
+                console.log(`⚠️ 未找到目标字段信息: ${targetFieldId}`);
+                continue;
+              }
+              
+              let convertedValue;
+              console.log(`目标字段类型: ${targetField.type} (${targetField.field_name})`);
+              
+              switch (targetField.type) {
+                case 1: // 文本字段
+                  convertedValue = String(rawValue);
+                  console.log(`🔄 文本转换: ${rawValue} -> "${convertedValue}"`);
+                  break;
+                case 2: // 数字字段  
+                  convertedValue = Number(rawValue);
+                  if (isNaN(convertedValue)) {
+                    console.log(`⚠️ 数字转换失败: ${rawValue} 不是有效数字，跳过`);
+                    continue;
+                  }
+                  console.log(`🔄 数字转换: ${rawValue} -> ${convertedValue}`);
+                  break;
+                case 3: // 单选字段
+                  convertedValue = String(rawValue);
+                  console.log(`🔄 单选转换: ${rawValue} -> "${convertedValue}"`);
+                  break;
+                case 4: // 多选字段
+                  if (Array.isArray(rawValue)) {
+                    convertedValue = rawValue.map(v => String(v));
+                  } else {
+                    convertedValue = [String(rawValue)];
+                  }
+                  console.log(`🔄 多选转换: ${JSON.stringify(rawValue)} -> ${JSON.stringify(convertedValue)}`);
+                  break;
+                case 5: // 日期字段
+                  convertedValue = rawValue; // 保持原格式
+                  console.log(`🔄 日期保持: ${rawValue}`);
+                  break;
+                default: // 其他类型保持原样
+                  convertedValue = rawValue;
+                  console.log(`🔄 默认保持: ${rawValue} (类型: ${targetField.type})`);
+              }
+              
+              payload[targetFieldId] = convertedValue;
+              mappedFieldCount++;
+              console.log(`✅ 成功映射: ${sourceFieldName} -> ${targetField.field_name} = ${JSON.stringify(convertedValue)} (类型: ${targetField.type})`);
+            } else {
+              console.log(`⚠️ 字段值为空: ${sourceFieldName}`);
             }
-            
-            let convertedValue;
-            console.log(`目标字段类型: ${targetField.type} (${targetField.field_name})`);
-            
-            switch (targetField.type) {
-              case 1: // 文本字段
-                convertedValue = String(rawValue);
-                console.log(`🔄 文本转换: ${rawValue} -> "${convertedValue}"`);
-                break;
-              case 2: // 数字字段  
-                convertedValue = Number(rawValue);
-                if (isNaN(convertedValue)) {
-                  console.log(`⚠️ 数字转换失败: ${rawValue} 不是有效数字，跳过`);
-                  continue;
-                }
-                console.log(`🔄 数字转换: ${rawValue} -> ${convertedValue}`);
-                break;
-              case 3: // 单选字段
-                convertedValue = String(rawValue);
-                console.log(`🔄 单选转换: ${rawValue} -> "${convertedValue}"`);
-                break;
-              case 4: // 多选字段
-                if (Array.isArray(rawValue)) {
-                  convertedValue = rawValue.map(v => String(v));
-                } else {
-                  convertedValue = [String(rawValue)];
-                }
-                console.log(`🔄 多选转换: ${JSON.stringify(rawValue)} -> ${JSON.stringify(convertedValue)}`);
-                break;
-              case 5: // 日期字段
-                convertedValue = rawValue; // 保持原格式
-                console.log(`🔄 日期保持: ${rawValue}`);
-                break;
-              default: // 其他类型保持原样
-                convertedValue = rawValue;
-                console.log(`🔄 默认保持: ${rawValue} (类型: ${targetField.type})`);
-            }
-            
-            payload[targetFieldId] = convertedValue;
-            mappedFieldCount++;
-            console.log(`✅ 成功映射: ${sourceFieldId} -> ${targetFieldId} = ${JSON.stringify(convertedValue)} (类型: ${targetField.type})`);
           } else {
-            console.log(`⚠️ 跳过字段: ${sourceFieldId} (不存在或为空)`);
+            console.log(`⚠️ 跳过字段: ${sourceFieldId} (字段名: ${sourceFieldName}，未找到或为空)`);
           }
         }
         
