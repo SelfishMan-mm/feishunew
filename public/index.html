@@ -583,6 +583,7 @@
 
       <!-- 开始复制按钮 -->
       <div class="action-section">
+        <button class="debug-btn" onclick="debugSource()" id="debugSourceBtn" disabled style="background: #9b59b6; margin-bottom: 12px;">🔍 调试源表数据</button>
         <button class="debug-btn" onclick="debugFields()" id="debugBtn" disabled style="background: #f39c12; margin-bottom: 12px;">🔍 调试字段匹配</button>
         <button class="test-btn" onclick="testCopy()" id="testBtn" disabled style="background: #e67e22; margin-bottom: 12px;">🧪 测试单条复制</button>
         <button class="start-btn" onclick="startCopy()" id="startBtn" disabled>开始复制</button>
@@ -745,14 +746,18 @@
     function updateStartButton() {
       const startBtn = document.getElementById('startBtn');
       const debugBtn = document.getElementById('debugBtn');
+      const debugSourceBtn = document.getElementById('debugSourceBtn');
       const testBtn = document.getElementById('testBtn');
       const sourceTable = document.getElementById('sourceTable').value;
       const targetTable = document.getElementById('targetTable').value;
 
       const canOperate = isAuthorized && sourceTable && targetTable;
+      const canDebugSource = isAuthorized && sourceTable; // 只需要源表即可调试
+      
       startBtn.disabled = !canOperate;
       debugBtn.disabled = !canOperate;
       testBtn.disabled = !canOperate;
+      debugSourceBtn.disabled = !canDebugSource;
     }
 
     // 开始复制
@@ -871,6 +876,71 @@
 
       } catch (error) {
         log(`❌ 测试网络错误: ${error.message}`);
+      }
+    }
+
+    // 调试源表数据
+    async function debugSource() {
+      const sourceTableId = document.getElementById('sourceTable').value;
+
+      if (!sourceTableId) {
+        return log('❗ 请先选择源表格');
+      }
+
+      if (!isAuthorized) {
+        return log('❗ 请先完成授权');
+      }
+
+      log('🔍 开始分析源表数据结构...');
+
+      try {
+        const response = await fetch('/api/debug-source', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            sourceTableId: sourceTableId,
+            baseId: currentBaseId,
+            personalToken: currentToken
+          })
+        });
+
+        const data = await response.json();
+        
+        if (data.success) {
+          log('✅ 源表数据分析完成！');
+          log('========================');
+          
+          // 显示字段信息
+          log('📋 字段列表:');
+          data.analysis.fields.forEach(field => {
+            log(`  ${field.name} (${field.id}) - 类型: ${getFieldTypeName(field.type)}`);
+          });
+          
+          // 显示记录样本
+          log(`\n📄 记录样本 (${data.analysis.records.length} 条):`);
+          data.analysis.records.forEach((record, index) => {
+            log(`\n记录 ${index + 1} (${record.record_id}):`);
+            log(`  字段keys: [${record.field_keys.join(', ')}]`);
+            
+            Object.entries(record.field_values).forEach(([fieldId, info]) => {
+              const displayValue = info.value !== null && info.value !== undefined 
+                ? JSON.stringify(info.value).substring(0, 50) 
+                : '(null/undefined)';
+              const emptyFlag = info.isEmpty ? ' ⚠️EMPTY' : '';
+              log(`  ${info.fieldName}: ${displayValue} [${info.type}]${emptyFlag}`);
+            });
+          });
+          
+          log('========================');
+        } else {
+          log(`❌ 分析失败: ${data.error}`);
+          if (data.details) {
+            log(`详情: ${JSON.stringify(data.details, null, 2)}`);
+          }
+        }
+
+      } catch (error) {
+        log(`❌ 网络错误: ${error.message}`);
       }
     }
 

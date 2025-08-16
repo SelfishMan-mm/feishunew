@@ -175,11 +175,11 @@ module.exports = async function handler(req, res) {
         
         console.log(`正在写入第 ${i + 1}/${records.length} 条记录...`);
         
-        // 🔧 数据验证：确保payload格式正确
+        // 🔧 数据验证：只过滤 null 和 undefined，保留空字符串和其他值
         const validatedPayload = {};
         for (const [fieldId, value] of Object.entries(payload)) {
-          // 跳过null、undefined或空字符串
-          if (value !== null && value !== undefined && value !== '') {
+          // ✅ 只过滤 null 和 undefined，保留空字符串 ''
+          if (value !== null && value !== undefined) {
             validatedPayload[fieldId] = value;
           }
         }

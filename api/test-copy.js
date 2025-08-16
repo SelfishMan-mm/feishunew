@@ -54,27 +54,32 @@ module.exports = async function handler(req, res) {
     }
 
     const sourceRecord = recordsRes.data.items[0];
-    console.log('源记录完整数据:', JSON.stringify(sourceRecord, null, 2));
-    console.log('源记录字段keys:', Object.keys(sourceRecord.fields));
-    console.log('预期的源字段IDs:', sourceFields.map(f => f.field_id));
+    console.log('\n🔍 源记录详细分析:');
+    console.log('记录ID:', sourceRecord.record_id);
+    console.log('完整fields结构:', JSON.stringify(sourceRecord.fields, null, 2));
+    console.log('实际字段keys:', Object.keys(sourceRecord.fields));
+    console.log('字段值详情:');
+    Object.entries(sourceRecord.fields).forEach(([key, value]) => {
+      console.log(`  ${key}: ${JSON.stringify(value)} (类型: ${typeof value})`);
+    });
 
     // 4. 构建目标记录数据（根据目标字段类型转换）
     const targetData = {};
     let transferredCount = 0;
     
+    console.log('\n🔄 开始字段映射和数据转换:');
     Object.entries(fieldMapping).forEach(([sourceFieldId, targetFieldId]) => {
-      console.log(`检查字段映射: ${sourceFieldId} -> ${targetFieldId}`);
-      console.log(`源记录中是否存在 ${sourceFieldId}:`, sourceRecord.fields.hasOwnProperty(sourceFieldId));
-      console.log(`源记录中的原始值:`, sourceRecord.fields[sourceFieldId]);
+      console.log(`\n检查映射: ${sourceFieldId} -> ${targetFieldId}`);
+      console.log(`源记录中是否存在字段:`, sourceRecord.fields.hasOwnProperty(sourceFieldId));
+      console.log(`原始值:`, JSON.stringify(sourceRecord.fields[sourceFieldId]));
+      console.log(`值的类型:`, typeof sourceRecord.fields[sourceFieldId]);
       
-      if (sourceRecord.fields.hasOwnProperty(sourceFieldId) && 
-          sourceRecord.fields[sourceFieldId] !== undefined && 
-          sourceRecord.fields[sourceFieldId] !== null) {
-        
+      if (sourceRecord.fields.hasOwnProperty(sourceFieldId)) {
         let rawValue = sourceRecord.fields[sourceFieldId];
+        console.log(`获取到原始值: ${JSON.stringify(rawValue)}`);
         
         // 🔧 根据目标字段类型进行数据转换
-        const targetField = tFields.find(f => f.field_id === targetFieldId);
+        const targetField = targetFields.find(f => f.field_id === targetFieldId);
         if (!targetField) {
           console.log(`⚠️ 未找到目标字段信息: ${targetFieldId}`);
           return;
@@ -131,11 +136,15 @@ module.exports = async function handler(req, res) {
     // 5. 创建记录（使用飞书官方标准格式）
     console.log('准备创建记录，数据:', JSON.stringify(targetData, null, 2));
     
-    // 🔧 数据验证：确保格式正确
+    // 🔧 数据验证：只过滤 null 和 undefined，保留空字符串和其他值
     const validatedData = {};
     for (const [fieldId, value] of Object.entries(targetData)) {
-      if (value !== null && value !== undefined && value !== '') {
+      // ✅ 只过滤 null 和 undefined，保留空字符串 ''
+      if (value !== null && value !== undefined) {
         validatedData[fieldId] = value;
+        console.log(`✅ 保留字段值: ${fieldId} = ${JSON.stringify(value)}`);
+      } else {
+        console.log(`❌ 过滤字段值: ${fieldId} = ${JSON.stringify(value)} (null或undefined)`);
       }
     }
     
